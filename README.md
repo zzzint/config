@@ -14,6 +14,10 @@ My editor settings and the instructions I give coding agents.
   - `ui-charcuterie` — rounds of divergent Storybook prototypes. Needs no other
     skill, but relies on omp's harness (`task` with `outputSchema`, `browser`,
     `local://`, `skill://`) and a Storybook app.
+- `omp/config.yml`, `omp/mcp.json` — omp settings and MCP servers. Live in
+  `~/.omp/agent/`.
+- `tern/settings.json` — Tern settings. Lives in
+  `~/Library/Application Support/Tern/`.
 - `zed/keymap.json` — Zed key bindings. Lives at `~/.config/zed/keymap.json`.
 
 These are copies. Edit the live file, then copy it back here.
