@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Council · {{REPO}} #{{PR}}</title>
+<style>
+  :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
+        --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--nit:#6b665c;--verify:#5a4a7a;--ok:#2f6b3a;--tag:#ebe7dd}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Georgia,"Times New Roman",serif}
+  header,main{max-width:76ch;margin:0 auto;padding:0 1.5rem}
+  header{padding-top:2.5rem;border-bottom:1px solid var(--rule);padding-bottom:1.25rem}
+  h1{font:600 1.55rem/1.2 Georgia,serif;margin:0 0 .25rem}
+  h1 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+  .meta{color:var(--muted);font-size:.9rem;margin:0}
+  .essence{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
+  .verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--ink)}
+  .verdict.yes{border-left-color:var(--ok)} .verdict.maybe{border-left-color:var(--fix)} .verdict.no{border-left-color:var(--block)}
+  .essence .q,.verdict .q{font:600 .75rem/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.3rem}
+  .counts{display:flex;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem;font-family:ui-monospace,Menlo,monospace}
+  .counts span b{font-weight:600}
+  nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--rule);padding:.5rem 1.5rem;font-size:.85rem;
+      font-family:ui-monospace,Menlo,monospace;display:flex;gap:1.25rem;flex-wrap:wrap;z-index:1}
+  nav a{color:var(--muted);text-decoration:none}
+  h2{font:600 .8rem/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+     margin:2.25rem 0 .75rem}
+  h2.do{color:var(--block)} h2.decide{color:var(--fix)} h2.verify{color:var(--verify)}
+  .card{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--rule);padding:1rem 1.1rem;margin:0 0 .9rem}
+  .card.do{border-left-color:var(--block)} .card.decide{border-left-color:var(--fix)} .card.verify{border-left-color:var(--verify)}
+  .card h3{margin:0 0 .5rem;font:600 1.05rem/1.3 Georgia,serif}
+  .card h3 .n{color:var(--muted);font-weight:400;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;margin-right:.4rem}
+  .tag{font:.7rem/1 ui-monospace,Menlo,monospace;background:var(--tag);padding:.15rem .4rem;border-radius:2px;margin-right:.25rem;color:var(--muted)}
+  dl{margin:.5rem 0 0;display:grid;grid-template-columns:9em 1fr;gap:.3rem .75rem}
+  dt{color:var(--muted);font-size:.8rem;font-family:ui-monospace,Menlo,monospace;padding-top:.15em}
+  dd{margin:0}
+  code,.where a{font:.85em ui-monospace,Menlo,monospace}
+  .where a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
+  ul.lines{padding-left:1.1rem} ul.lines li{margin:.25rem 0}
+  .primer{border-left:4px solid var(--q);background:var(--card);padding:.9rem 1.1rem;margin:0 0 .9rem}
+  .primer h3{margin:0 0 .35rem;font:600 1rem/1.3 Georgia,serif}
+  .primer p{margin:.35rem 0}
+  .primer .k{font:.75rem ui-monospace,Menlo,monospace;color:var(--muted);margin-right:.4rem}
+  .good{border-left:4px solid var(--ok);padding:.6rem 1rem;background:var(--card);margin:1rem 0}
+  footer{max-width:76ch;margin:3rem auto 2rem;padding:0 1.5rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--rule);padding-top:1rem}
+  @media (max-width:600px){dl{grid-template-columns:1fr}dt{padding-top:.5rem}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Council · <a href="{{PR_URL}}">{{REPO}} #{{PR}}</a> — {{PR_TITLE}}</h1>
+  <p class="meta">{{STACK_POSITION}} · head <code>{{HEAD_SHA_SHORT}}</code> · reviewed {{DATE}}</p>
+  <p class="essence"><span class="q">High level context</span>{{ESSENCE — two to four plain sentences: the problem, what changes, what a user or operator gets. No judgement here.}}</p>
+  <p class="verdict {{yes | maybe | no}}"><span class="q">Is this the right direction?</span><b>{{Yes. | Maybe. | No.}}</b> {{DIRECTION — two or three sentences of why, stated as facts about the approach, never as what a seat or skeptic did; an open question about the approach is named here with a link to its card. The class on the paragraph is `yes` (green bar), `maybe` (amber bar), or `no` (red bar).}}</p>
+  <p class="counts"><span><b>{{N_DO}}</b> do before merge</span><span><b>{{N_DECIDE}}</b> decide</span><span><b>{{N_NITS}}</b> nits</span></p>
+</header>
+<nav>
+  <a href="#primer">Primer</a><a href="#cards">Cards</a><a href="#nits">Nits</a>
+</nav>
+<main>
+
+<h2 id="primer">Primer — what this review assumed you knew</h2>
+<!-- Written by the tutor (TUTOR.md). One <section class="primer"> per concept, most foundational first.
+     A concept already taught on an earlier PR gets one line linking back, not a repeat. -->
+<section class="primer">
+  <h3>{{CONCEPT — as the code and docs name it}}</h3>
+  <p><span class="k">what it is</span>{{One paragraph, plain words: the idea in general, then how this codebase does it.}}</p>
+  <p class="where"><span class="k">where it lives</span><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></p>
+  <p><span class="k">why it mattered here</span>{{One sentence naming the card(s) that assumed it.}}</p>
+  <p><span class="k">read next</span>{{Optional: the doc section or one external reference.}}</p>
+</section>
+<ul class="lines">
+  <li><span class="k">already taught</span>{{CONCEPT}} — see the #{{N}} review's primer.</li>
+</ul>
+
+<h2 id="cards">Findings</h2>
+
+<!-- ============ ONE CARD, repeat per finding. Cards group by action: Do before merge, Decide, Verify in #N. Omit an empty group heading entirely.
+     Every <dd> is one or more full sentences ending in a full stop, readable alone by someone
+     who has not opened the diff. No review-coined shorthand. ============ -->
+<h2 id="do" class="do">Do before merge</h2>
+<article class="card do" id="f1">
+  <h3><span class="n">#1</span>{{TITLE — what goes wrong, in plain words}}</h3>
+  <span class="tag">{{SEAT}}</span><span class="tag">{{SEAT_2, if two seats found it}}</span>
+  <dl>
+    <dt>Context</dt><dd>{{One sentence: what this code is for and what it is trying to guarantee.}}</dd>
+    <dt>Where</dt><dd class="where"><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a>{{ · spec line if it disagrees}}</dd>
+    <dt>Finding</dt><dd>{{Two or three sentences. Mechanism first, then the consequence a user or operator would see.}}</dd>
+    <dt>Recommendation</dt><dd>{{The change, concretely: the shape of the fix, the smallest version that closes it. If it is a decision rather than a change, what the decision is and what each side implies.}}</dd>
+    <dt>Fix size</dt><dd>{{One honest line: "one statement plus one test", "two sentences in the changeset", "a separate PR".}}</dd>
+    <dt>Judgement call</dt><dd>{{Only when one decision would make the finding evaporate: the decision, and what it does to the finding. Omit the row otherwise.}}</dd>
+  </dl>
+</article>
+<!-- ============ /CARD ============ -->
+
+<h2 id="decide" class="decide">Decide</h2>
+<h2 id="verify" class="verify">Verify in #{{N}}</h2>
+
+<h2 id="nits">Nits</h2>
+<ul class="lines">
+  <li><span class="tag">{{SEAT}}</span> {{One full sentence. A nit is author's-call only; anything with a user- or operator-visible consequence is a card.}} — <span class="where"><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></span></li>
+</ul>
+
+</main>
+<footer>Nothing was executed; every cite on this page was read in the source at the reviewed commit.</footer>
+</body>
+</html>
