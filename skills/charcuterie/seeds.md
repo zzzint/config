@@ -1,4 +1,4 @@
-# Entropy deck for ui-charcuterie wildcards. One `category: seed` per line; lines starting with # are ignored.
+# Entropy deck for charcuterie wildcards. One `category: seed` per line; lines starting with # are ignored.
 # Edit freely. The parent draws two lines from two different categories per wildcard.
 metaphor: ledger
 metaphor: garden bed

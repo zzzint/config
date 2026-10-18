@@ -12,7 +12,7 @@ My editor settings and the instructions I give coding agents.
     `python3`. Its `ledgers/` and `reports/` are per-machine history and are not
     kept here. `EXAMPLE.html` here is a made-up review; never copy the live one
     back, because the live one quotes a client's private repository.
-  - `ui-charcuterie` — rounds of divergent Storybook prototypes. Needs no other
+  - `charcuterie` — rounds of divergent Storybook prototypes. Needs no other
     skill, but relies on omp's harness (`task` with `outputSchema`, `browser`,
     `local://`, `skill://`) and a Storybook app.
 - `omp/config.yml`, `omp/mcp.json` — omp settings and MCP servers. Live in

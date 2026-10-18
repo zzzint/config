@@ -1,5 +1,5 @@
 ---
-name: ui-charcuterie
+name: charcuterie
 description: Storybook charcuterie board — rounds of divergent UI prototypes, one sub-agent each, narrowed by user feedback until the user picks a winner.
 disable-model-invocation: true
 ---
@@ -48,7 +48,7 @@ Board size is **8** unless the user asked for another number this round.
 
 - **Round 1**: write **direction cards** for half the items (the strongest obvious approaches, each a one-line thesis distinct from the others). The rest are **wildcards**.
 - **Later rounds**: at least ⅓ wildcards. Every other item is a **recombination** card: a thesis built from named Keep traits. Spread Keep traits so each appears in at least one item, and pair traits that never shared an item before.
-- **Wildcard draw**: for each wildcard, draw from [`seeds.md`](seeds.md) with real randomness: `sort -R` over `skill://ui-charcuterie/seeds.md`, skip `#` lines, take the first two lines whose categories differ. Redraw when that pair already appeared this round. Pass the two seed lines verbatim; the sub-agent invents the direction.
+- **Wildcard draw**: for each wildcard, draw from [`seeds.md`](seeds.md) with real randomness: `sort -R` over `skill://charcuterie/seeds.md`, skip `#` lines, take the first two lines whose categories differ. Redraw when that pair already appeared this round. Pass the two seed lines verbatim; the sub-agent invents the direction.
 - **One focus per round**: each round explores exactly one topic from the Backlog: the one the user names, or else the top one. All items vary that focus and keep everything else at the Baseline. When feedback raises new topics, add them to the Backlog instead of widening the round.
 - **Behaviour focus**: when the user's complaint is about *how something behaves* (jumping, alignment, sync), not how it looks, first build the mechanics once in the shared base with a debug harness story. Verify it yourself with numeric checks (per-case pass counts, pixel deltas). Then have every item use it and vary only the presentation. In Look, re-run the same numeric checks on every item, not just screenshots.
 
@@ -58,7 +58,7 @@ Assign each item a global number, a PascalCase item name, its file `<board root>
 
 ## 3. Build the round
 
-Dispatch one `task` batch with one item per board item (default `task` agent). Shared `context` carries: the concept, the target tree, app directory and Storybook base URL, the conventions read in Setup (paths to the two example stories and any fixture modules), the Keep / Drop lists, and **every taken direction** — prior rounds plus every card in this round, each labelled with its item number — so parallel sub-agents steer apart. Each item's `task` says: read `skill://ui-charcuterie/prototyper.md` and follow it; then its number, name, file path, title, and card thesis or seed lines. When `skill://ui-charcuterie` does not resolve yet (the skill was installed this session and not reloaded), point sub-agents at the brief's absolute path under the skill directory instead.
+Dispatch one `task` batch with one item per board item (default `task` agent). Shared `context` carries: the concept, the target tree, app directory and Storybook base URL, the conventions read in Setup (paths to the two example stories and any fixture modules), the Keep / Drop lists, and **every taken direction** — prior rounds plus every card in this round, each labelled with its item number — so parallel sub-agents steer apart. Each item's `task` says: read `skill://charcuterie/prototyper.md` and follow it; then its number, name, file path, title, and card thesis or seed lines. When `skill://charcuterie` does not resolve yet (the skill was installed this session and not reloaded), point sub-agents at the brief's absolute path under the skill directory instead.
 
 Set this `outputSchema` on every item:
 
