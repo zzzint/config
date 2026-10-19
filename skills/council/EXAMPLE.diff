@@ -1,0 +1,77 @@
+diff --git a/src/middleware/rateLimit.ts b/src/middleware/rateLimit.ts
+new file mode 100644
+index 0000000..5d1e0c9
+--- /dev/null
++++ b/src/middleware/rateLimit.ts
+@@ -0,0 +1,55 @@
++import type { Request, Response, NextFunction } from "express";
++import { redis } from "../redis";
++import { log } from "../log";
++
++// Token-bucket limit for the public API, one bucket per account.
++// Bucket state lives in Redis so every instance shares one count.
++
++const KEY_PREFIX = "ratelimit:";
++
++export type Bucket = { tokens: number; updatedAt: number };
++
++export const limiter = createLimiter(20, 5);
++
++function createLimiter(burst: number, refillPerSecond: number) {
++  return { burst, refillPerSecond };
++}
++
++export async function rateLimit(req: Request, res: Response, next: NextFunction) {
++  const accountId = req.account.id;
++  let bucket: Bucket;
++  try {
++    bucket = await readBucket(accountId);
++  } catch (error) {
++    log.error("rate limit store unavailable", { error });
++    return res.status(429).end();
++  }
++
++  const now = Date.now();
++  const refilled = refill(bucket, now);
++  if (refilled.tokens >= 1) {
++    await writeBucket(accountId, { tokens: refilled.tokens - 1, updatedAt: now });
++    return next();
++  }
++  return reject(res, refilled);
++}
++
++async function readBucket(accountId: string): Promise<Bucket> {
++  const raw = await redis.get(KEY_PREFIX + accountId);
++  return raw ? (JSON.parse(raw) as Bucket) : { tokens: limiter.burst, updatedAt: Date.now() };
++}
++
++async function writeBucket(accountId: string, bucket: Bucket): Promise<void> {
++  await redis.set(KEY_PREFIX + accountId, JSON.stringify(bucket));
++}
++
++function refill(bucket: Bucket, now: number): Bucket {
++  const earned = ((now - bucket.updatedAt) / 1000) * limiter.refillPerSecond;
++  return { tokens: Math.min(limiter.burst, bucket.tokens + earned), updatedAt: bucket.updatedAt };
++}
++
++function reject(res: Response, bucket: Bucket) {
++  const waitMs = Math.ceil(((1 - bucket.tokens) / limiter.refillPerSecond) * 1000);
++  res.setHeader("Retry-After", String(waitMs));
++  return res.status(429).json({ error: "rate_limited" });
++}
+diff --git a/src/app.ts b/src/app.ts
+index 3c4d5e6..7f8a9b0 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -18,9 +18,11 @@ import { idempotency } from "./middleware/idempotency";
+ export function createApp() {
+   const app = express();
+   app.use(express.json());
++  // Every public route is limited per account.
+   app.use("/v1", authenticate);
+   app.use("/v1", idempotency);
++  app.use("/v1", rateLimit);
+   app.use("/v1", publicRoutes);
+   app.use("/internal", internalRoutes);
+   return app;
+ }

@@ -3,105 +3,190 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Council · {{REPO}} #{{PR}}</title>
+<!-- index.py reads this. JSON in single quotes: escape ' in the title as &#39;. head is the full SHA. label is the PR's review: label without the prefix (glance, advisory, cosigner), or "" when it has none. -->
+<meta name="council" content='{"owner":"{{OWNER}}","repo":"{{REPO}}","pr":{{PR}},"title":"{{PR_TITLE}}","author":"{{AUTHOR}}","label":"{{glance|advisory|cosigner|}}","head":"{{HEAD_SHA}}","reviewed":"{{YYYY-MM-DD}}","tier":"{{light|full}}","direction":"{{yes|maybe|no}}","counts":{"do":{{N_DO}},"decide":{{N_DECIDE}},"verify":{{N_VERIFY}},"nits":{{N_NITS}}}}'>
+<title>Council · {{OWNER}}/{{REPO}} #{{PR}}</title>
 <style>
   :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
-        --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--nit:#6b665c;--verify:#5a4a7a;--ok:#2f6b3a;--tag:#ebe7dd}
+        --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--verify:#5a4a7a;--ok:#2f6b3a;--tag:#ebe7dd}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Georgia,"Times New Roman",serif}
-  header,main{max-width:76ch;margin:0 auto;padding:0 1.5rem}
-  header{padding-top:2.5rem;border-bottom:1px solid var(--rule);padding-bottom:1.25rem}
+  header,main,footer{max-width:76ch;margin:0 auto;padding:0 1.5rem}
+  header{padding-top:2.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--rule)}
   h1{font:600 1.55rem/1.2 Georgia,serif;margin:0 0 .25rem}
   h1 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+  .q,.k,.n,.tag,.assumes,.counts,h2,dt,summary,legend,.pick label,#tray{font-family:ui-monospace,Menlo,monospace}
   .meta{color:var(--muted);font-size:.9rem;margin:0}
-  .essence{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
-  .verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--ink)}
+  .essence,.verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
   .verdict.yes{border-left-color:var(--ok)} .verdict.maybe{border-left-color:var(--fix)} .verdict.no{border-left-color:var(--block)}
-  .essence .q,.verdict .q{font:600 .75rem/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.3rem}
-  .counts{display:flex;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem;font-family:ui-monospace,Menlo,monospace}
-  .counts span b{font-weight:600}
-  nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--rule);padding:.5rem 1.5rem;font-size:.85rem;
-      font-family:ui-monospace,Menlo,monospace;display:flex;gap:1.25rem;flex-wrap:wrap;z-index:1}
-  nav a{color:var(--muted);text-decoration:none}
-  h2{font:600 .8rem/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-     margin:2.25rem 0 .75rem}
+  .q{display:block;margin-bottom:.3rem;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .counts{display:flex;flex-wrap:wrap;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem}
+  h2{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2.25rem 0 .75rem}
   h2.do{color:var(--block)} h2.decide{color:var(--fix)} h2.verify{color:var(--verify)}
+  #primer{margin-top:1.75rem}
+  #primer>summary,.evidence>summary{cursor:pointer;font-size:.8rem;color:var(--q)}
+  .primer{border-left:4px solid var(--q);background:var(--card);padding:.75rem 1.1rem;margin:.75rem 0}
+  .primer h3{margin:0 0 .3rem;font:600 1rem/1.3 Georgia,serif}
+  .primer p{margin:.3rem 0}
+  .k{font-size:.72rem;color:var(--muted);margin-right:.5rem}
   .card{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--rule);padding:1rem 1.1rem;margin:0 0 .9rem}
   .card.do{border-left-color:var(--block)} .card.decide{border-left-color:var(--fix)} .card.verify{border-left-color:var(--verify)}
-  .card h3{margin:0 0 .5rem;font:600 1.05rem/1.3 Georgia,serif}
-  .card h3 .n{color:var(--muted);font-weight:400;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;margin-right:.4rem}
-  .tag{font:.7rem/1 ui-monospace,Menlo,monospace;background:var(--tag);padding:.15rem .4rem;border-radius:2px;margin-right:.25rem;color:var(--muted)}
+  .card h3{margin:0 0 .35rem;font:600 1.05rem/1.3 Georgia,serif}
+  .n{color:var(--muted);font-weight:400;font-size:.85rem;margin-right:.4rem}
+  .why{margin:0 0 .5rem}
+  .tag{font-size:.7rem;background:var(--tag);padding:.15rem .4rem;border-radius:2px;margin-right:.25rem;color:var(--muted)}
+  .tag a{color:inherit}
+  .assumes{font-size:.7rem;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q);margin-left:.35rem}
+  .pick{border:0;margin:.8rem 0 0;padding:0}
+  .pick legend{float:left;font-size:.75rem;color:var(--muted);margin-right:1rem;padding:0}
+  .pick label{font-size:.75rem;margin-right:.9rem;cursor:pointer}
+  .draft{clear:both;margin:.45rem 0 0;padding:.45rem .7rem;background:#fff;border:1px dashed var(--rule);opacity:.5}
+  .draft[data-framing]::before{content:attr(data-framing);display:block;font:.65rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .pick:has([value=ask]:checked) [data-framing=ask],.pick:has([value=direct]:checked) [data-framing=direct],
+  .nits li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
+  .evidence{margin-top:.75rem}
+  .lands{clear:both;margin:.45rem 0 0;font-size:.75rem;color:var(--muted)}
+  a.lands{font:.8rem ui-monospace,Menlo,monospace;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
   dl{margin:.5rem 0 0;display:grid;grid-template-columns:9em 1fr;gap:.3rem .75rem}
-  dt{color:var(--muted);font-size:.8rem;font-family:ui-monospace,Menlo,monospace;padding-top:.15em}
+  dt{color:var(--muted);font-size:.8rem;padding-top:.15em}
   dd{margin:0}
   code,.where a{font:.85em ui-monospace,Menlo,monospace}
   .where a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
-  ul.lines{padding-left:1.1rem} ul.lines li{margin:.25rem 0}
-  .primer{border-left:4px solid var(--q);background:var(--card);padding:.9rem 1.1rem;margin:0 0 .9rem}
-  .primer h3{margin:0 0 .35rem;font:600 1rem/1.3 Georgia,serif}
-  .primer p{margin:.35rem 0}
-  .primer .k{font:.75rem ui-monospace,Menlo,monospace;color:var(--muted);margin-right:.4rem}
-  .good{border-left:4px solid var(--ok);padding:.6rem 1rem;background:var(--card);margin:1rem 0}
-  footer{max-width:76ch;margin:3rem auto 2rem;padding:0 1.5rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--rule);padding-top:1rem}
-  @media (max-width:600px){dl{grid-template-columns:1fr}dt{padding-top:.5rem}}
+  ul.nits{list-style:none;padding:0}
+  .nits li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
+  .nits .where{margin-left:.35rem}
+  #tray{position:sticky;bottom:0;max-width:76ch;margin:2rem auto 0;padding:.55rem 1.5rem;background:var(--ink);color:var(--bg);
+        display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
+  #tray[hidden]{display:none}
+  #tray button{font:inherit;background:var(--bg);color:var(--ink);border:0;padding:.35rem .8rem;cursor:pointer}
+  #md{position:fixed;left:-9999px;bottom:4rem;width:min(64ch,90vw);height:14rem;font:.8rem ui-monospace,Menlo,monospace}
+  #md.show{left:auto;right:1rem}
+  footer{margin-top:2rem;padding-top:1rem;padding-bottom:2rem;border-top:1px solid var(--rule);color:var(--muted);font-size:.8rem}
+  @media (max-width:600px){dl{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<!-- Caps live in FORMAT.md; floor.py enforces them. Drafts are plain text: write code as `backticks`, they are pasted as markdown. -->
 <header>
-  <h1>Council · <a href="{{PR_URL}}">{{REPO}} #{{PR}}</a> — {{PR_TITLE}}</h1>
-  <p class="meta">{{STACK_POSITION}} · head <code>{{HEAD_SHA_SHORT}}</code> · reviewed {{DATE}}</p>
-  <p class="essence"><span class="q">High level context</span>{{ESSENCE — two to four plain sentences: the problem, what changes, what a user or operator gets. No judgement here.}}</p>
-  <p class="verdict {{yes | maybe | no}}"><span class="q">Is this the right direction?</span><b>{{Yes. | Maybe. | No.}}</b> {{DIRECTION — two or three sentences of why, stated as facts about the approach, never as what a seat or skeptic did; an open question about the approach is named here with a link to its card. The class on the paragraph is `yes` (green bar), `maybe` (amber bar), or `no` (red bar).}}</p>
-  <p class="counts"><span><b>{{N_DO}}</b> do before merge</span><span><b>{{N_DECIDE}}</b> decide</span><span><b>{{N_NITS}}</b> nits</span></p>
+  <h1>Council · <a href="https://github.com/{{OWNER}}/{{REPO}}/pull/{{PR}}">{{OWNER}}/{{REPO}} #{{PR}}</a> — {{PR_TITLE}}</h1>
+  <p class="meta">{{STACK_POSITION}} · head <code>{{HEAD_SHA_SHORT}}</code> · reviewed {{YYYY-MM-DD}}</p>
+  <p class="essence"><span class="q">High level context</span>{{≤4 sentences: the problem, what changes, what a user or operator gets. No judgement.}}</p>
+  <p class="verdict {{yes|maybe|no}}"><span class="q">Is this the right direction?</span><b>{{Yes.|Maybe.|No.}}</b> {{≤3 sentences of why, as facts about the approach. Maybe says what would settle it.}}</p>
+  <p class="counts"><span><b>{{N_DO}}</b> do before merge</span><span><b>{{N_DECIDE}}</b> decide</span><span><b>{{N_VERIFY}}</b> verify in #{{M}}</span><span><b>{{N_NITS}}</b> nits</span></p>
 </header>
-<nav>
-  <a href="#primer">Primer</a><a href="#cards">Cards</a><a href="#nits">Nits</a>
-</nav>
 <main>
 
-<h2 id="primer">Primer — what this review assumed you knew</h2>
-<!-- Written by the tutor (TUTOR.md). One <section class="primer"> per concept, most foundational first.
-     A concept already taught on an earlier PR gets one line linking back, not a repeat. -->
-<section class="primer">
-  <h3>{{CONCEPT — as the code and docs name it}}</h3>
-  <p><span class="k">what it is</span>{{One paragraph, plain words: the idea in general, then how this codebase does it.}}</p>
-  <p class="where"><span class="k">where it lives</span><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></p>
-  <p><span class="k">why it mattered here</span>{{One sentence naming the card(s) that assumed it.}}</p>
-  <p><span class="k">read next</span>{{Optional: the doc section or one external reference.}}</p>
-</section>
-<ul class="lines">
-  <li><span class="k">already taught</span>{{CONCEPT}} — see the #{{N}} review's primer.</li>
-</ul>
+<!-- PRIMER (TUTOR.md). Collapsed. ≤3 concepts, standalone: no links to other review pages. Omit the whole details when no concept qualifies. -->
+<details id="primer">
+  <summary>Primer — {{N}} concepts this page assumes</summary>
+  <section class="primer" id="p-{{slug}}">
+    <h3>{{CONCEPT, as the code and docs name it}}</h3>
+    <p class="idea"><span class="k">idea</span>{{Exactly 1 sentence: the general idea, true in any codebase.}}</p>
+    <p class="here"><span class="k">here</span>{{≤2 sentences: how this repo does it, with a link.}} <a href="https://github.com/{{OWNER}}/{{REPO}}/blob/{{HEAD_SHA}}/{{PATH}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></p>
+    <p class="read"><span class="k">read</span>{{Optional: one link to a doc section.}}</p>
+  </section>
+</details>
 
-<h2 id="cards">Findings</h2>
+<!-- GROUPS: h2.do "Do before merge", h2.decide "Decide", h2.verify "Verify in #M". Omit an empty group. -->
+<h2 class="do">Do before merge</h2>
 
-<!-- ============ ONE CARD, repeat per finding. Cards group by action: Do before merge, Decide, Verify in #N. Omit an empty group heading entirely.
-     Every <dd> is one or more full sentences ending in a full stop, readable alone by someone
-     who has not opened the diff. No review-coined shorthand. ============ -->
-<h2 id="do" class="do">Do before merge</h2>
-<article class="card do" id="f1">
-  <h3><span class="n">#1</span>{{TITLE — what goes wrong, in plain words}}</h3>
-  <span class="tag">{{SEAT}}</span><span class="tag">{{SEAT_2, if two seats found it}}</span>
-  <dl>
-    <dt>Context</dt><dd>{{One sentence: what this code is for and what it is trying to guarantee.}}</dd>
-    <dt>Where</dt><dd class="where"><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a>{{ · spec line if it disagrees}}</dd>
-    <dt>Finding</dt><dd>{{Two or three sentences. Mechanism first, then the consequence a user or operator would see.}}</dd>
-    <dt>Recommendation</dt><dd>{{The change, concretely: the shape of the fix, the smallest version that closes it. If it is a decision rather than a change, what the decision is and what each side implies.}}</dd>
-    <dt>Fix size</dt><dd>{{One honest line: "one statement plus one test", "two sentences in the changeset", "a separate PR".}}</dd>
-    <dt>Judgement call</dt><dd>{{Only when one decision would make the finding evaporate: the decision, and what it does to the finding. Omit the row otherwise.}}</dd>
-  </dl>
+<!-- CARD, repeat per finding. Default pick: ask for do/decide, skip for verify.
+     data-cite is where the comment lands: a right-side line inside a hunk of PR<N>.diff (prefer an added line), or "PR" when no diff line fits.
+     a.lands links to that line in the PR's Files changed view. Leave its href as a placeholder: `python3 lands.py <page>` writes it from data-cite.
+     With data-cite="PR" it links to https://github.com/{{OWNER}}/{{REPO}}/pull/{{PR}} and reads "the PR conversation". -->
+<article class="card do" id="f1" data-cite="{{PATH}}:{{LINE}}">
+  <h3><span class="n">#1</span>{{TITLE: what goes wrong, in plain words}}</h3>
+  <p class="why">{{Exactly 1 sentence: the consequence a user or operator sees.}}</p>
+  <div class="tags"><span class="tag">{{LENS}}</span><a class="assumes" href="#p-{{slug}}">assumes: {{concept}}</a></div>
+  <!-- Carried forward from an earlier PR in the stack, the one allowed cross-page link:
+       <span class="tag"><a href="{{owner}}-{{repo}}-{{M}}.html#f{{K}}">from #{{M}}</a></span> -->
+  <fieldset class="pick">
+    <legend>Comment</legend>
+    <label><input type="radio" name="pick-f1" value="ask" checked> Ask</label>
+    <label><input type="radio" name="pick-f1" value="direct"> Direct</label>
+    <label><input type="radio" name="pick-f1" value="skip"> Skip</label>
+    <p class="lands">Lands on <a class="lands" href="https://github.com/{{OWNER}}/{{REPO}}/pull/{{PR}}/files#diff-{{SHA256_OF_PATH}}R{{LINE}}">{{PATH}}:{{LINE}}</a></p>
+    <div class="draft" data-framing="ask" contenteditable="true">{{≤2 sentences: the mechanism as the author meets it, then the question. A remedy only as a question.}}</div>
+    <div class="draft" data-framing="direct" contenteditable="true">{{≤2 sentences: the mechanism, then the design move in the user's voice ("I'd …").}}</div>
+  </fieldset>
+  <details class="evidence">
+    <summary>Evidence</summary>
+    <dl>
+      <dt>Context</dt><dd>{{1 sentence: what this code is for and what it guarantees.}}</dd>
+      <dt>Where</dt><dd class="where"><a href="https://github.com/{{OWNER}}/{{REPO}}/blob/{{HEAD_SHA}}/{{PATH}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></dd>
+      <dt>Finding</dt><dd>{{≤4 sentences: mechanism first, then the consequence.}}</dd>
+      <dt>Recommendation</dt><dd>{{≤3 sentences: the smallest fix, then the durable fix if bigger.}}</dd>
+      <dt>Fix size</dt><dd>{{Terse, with a full stop.}}</dd>
+      <dt>Judgement call</dt><dd>{{Optional, ≤2 sentences: the decision that would make the finding evaporate. Omit the row otherwise.}}</dd>
+      <dt>Reply</dt><dd>{{≤2 sentences: what the author will likely say back, and whether it changes anything.}}</dd>
+    </dl>
+  </details>
 </article>
-<!-- ============ /CARD ============ -->
+<!-- /CARD -->
 
-<h2 id="decide" class="decide">Decide</h2>
-<h2 id="verify" class="verify">Verify in #{{N}}</h2>
+<h2 class="decide">Decide</h2>
+<h2 class="verify">Verify in #{{M}}</h2>
 
+<!-- NITS: no user- or operator-visible consequence. Unchecked by default. -->
 <h2 id="nits">Nits</h2>
-<ul class="lines">
-  <li><span class="tag">{{SEAT}}</span> {{One full sentence. A nit is author's-call only; anything with a user- or operator-visible consequence is a card.}} — <span class="where"><a href="{{BLOB_URL}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></span></li>
+<ul class="nits">
+  <li id="n1" data-cite="{{PATH}}:{{LINE}}"><input type="checkbox" aria-label="pick nit 1"> <span class="tag">{{LENS}}</span> <span class="text">{{1 sentence.}}</span><span class="where"><a class="lands" href="https://github.com/{{OWNER}}/{{REPO}}/pull/{{PR}}/files#diff-{{SHA256_OF_PATH}}R{{LINE}}">{{FILE}}:{{LINE}}</a></span>
+    <div class="draft" contenteditable="true">nit: {{1 sentence.}}</div></li>
 </ul>
 
 </main>
+<div id="tray" hidden><span><b class="count">0</b> selected</span><button id="copy" type="button">Copy selected</button><textarea id="md" readonly aria-hidden="true" tabindex="-1"></textarea></div>
 <footer>Nothing was executed; every cite on this page was read in the source at the reviewed commit.</footer>
+<!-- Picks, edits, copy. Leave as is. -->
+<script>
+(() => {
+  const meta = JSON.parse(document.querySelector('meta[name="council"]').content);
+  const key = `council:${meta.owner}/${meta.repo}#${meta.pr}@${meta.head}`;
+  const items = [...document.querySelectorAll('article.card, ul.nits li')];
+  const tray = document.getElementById('tray'), out = document.getElementById('md'), button = document.getElementById('copy');
+  const box = el => el.querySelector('input[type="checkbox"]');
+  const pick = el => box(el) ? (box(el).checked ? 'nit' : 'skip') : el.querySelector('.pick input:checked')?.value || 'skip';
+  const drafts = el => [...el.querySelectorAll('.draft')];
+  const draft = el => box(el) ? drafts(el)[0] : el.querySelector(`.draft[data-framing="${pick(el)}"]`);
+  const picked = () => items.filter(el => pick(el) !== 'skip');
+  const render = () => { tray.querySelector('.count').textContent = picked().length; };
+  function save() {
+    const state = {};
+    for (const el of items) state[el.id] = { pick: pick(el), drafts: drafts(el).map(d => d.innerText) };
+    localStorage.setItem(key, JSON.stringify(state));
+    render();
+  }
+  const saved = JSON.parse(localStorage.getItem(key) || '{}');
+  for (const el of items) {
+    const s = saved[el.id];
+    if (!s) continue;
+    if (box(el)) box(el).checked = s.pick === 'nit';
+    else el.querySelectorAll('.pick input').forEach(r => { r.checked = r.value === s.pick; });
+    drafts(el).forEach((d, i) => { if (typeof s.drafts?.[i] === 'string') d.innerText = s.drafts[i]; });
+  }
+  document.addEventListener('change', save);
+  document.addEventListener('input', e => {
+    const d = e.target.closest?.('.draft');
+    if (!d) return;
+    const el = d.closest('article.card, ul.nits li');
+    if (box(el)) box(el).checked = true;
+    else el.querySelector(`.pick input[value="${d.dataset.framing}"]`).checked = true;
+    save();
+  });
+  const heading = el => {
+    const a = el.querySelector('a.lands');
+    return el.dataset.cite === 'PR' ? '**PR conversation**' : `**[\`${el.dataset.cite}\`](${a ? a.href : ''})**`;
+  };
+  const markdown = () => picked().map(el => `${heading(el)}\n${draft(el).innerText.trim()}`).join('\n\n');
+  button.addEventListener('click', async () => {
+    out.value = markdown();
+    try { await navigator.clipboard.writeText(out.value); button.textContent = 'Copied'; }
+    catch { out.classList.add('show'); out.select(); document.execCommand('copy'); button.textContent = 'Selected: press Cmd+C'; }
+    setTimeout(() => { button.textContent = 'Copy selected'; }, 2000);
+  });
+  tray.hidden = false;
+  render();
+})();
+</script>
 </body>
 </html>

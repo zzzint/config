@@ -3,138 +3,258 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="council" content='{"owner":"acme","repo":"shop-api","pr":142,"title":"rate-limit the public API per account with a token bucket","author":"sam-dev","label":"cosigner","head":"5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7","reviewed":"2026-10-01","tier":"full","direction":"yes","counts":{"do":2,"decide":2,"verify":0,"nits":3}}'>
 <title>Council · acme/shop-api #142</title>
 <style>
   :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
-        --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--nit:#6b665c;--verify:#5a4a7a;--ok:#2f6b3a;--tag:#ebe7dd}
+        --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--verify:#5a4a7a;--ok:#2f6b3a;--tag:#ebe7dd}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Georgia,"Times New Roman",serif}
-  header,main{max-width:76ch;margin:0 auto;padding:0 1.5rem}
-  header{padding-top:2.5rem;border-bottom:1px solid var(--rule);padding-bottom:1.25rem}
+  header,main,footer{max-width:76ch;margin:0 auto;padding:0 1.5rem}
+  header{padding-top:2.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--rule)}
   h1{font:600 1.55rem/1.2 Georgia,serif;margin:0 0 .25rem}
   h1 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+  .q,.k,.n,.tag,.assumes,.counts,h2,dt,summary,legend,.pick label,#tray{font-family:ui-monospace,Menlo,monospace}
   .meta{color:var(--muted);font-size:.9rem;margin:0}
-  .essence{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
-  .verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--ink)}
+  .essence,.verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
   .verdict.yes{border-left-color:var(--ok)} .verdict.maybe{border-left-color:var(--fix)} .verdict.no{border-left-color:var(--block)}
-  .essence .q,.verdict .q{font:600 .75rem/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.3rem}
-  .counts{display:flex;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem;font-family:ui-monospace,Menlo,monospace}
-  .counts span b{font-weight:600}
-  nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--rule);padding:.5rem 1.5rem;font-size:.85rem;
-      font-family:ui-monospace,Menlo,monospace;display:flex;gap:1.25rem;flex-wrap:wrap;z-index:1}
-  nav a{color:var(--muted);text-decoration:none}
-  h2{font:600 .8rem/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-     margin:2.25rem 0 .75rem}
+  .q{display:block;margin-bottom:.3rem;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .counts{display:flex;flex-wrap:wrap;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem}
+  h2{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2.25rem 0 .75rem}
   h2.do{color:var(--block)} h2.decide{color:var(--fix)} h2.verify{color:var(--verify)}
+  #primer{margin-top:1.75rem}
+  #primer>summary,.evidence>summary{cursor:pointer;font-size:.8rem;color:var(--q)}
+  .primer{border-left:4px solid var(--q);background:var(--card);padding:.75rem 1.1rem;margin:.75rem 0}
+  .primer h3{margin:0 0 .3rem;font:600 1rem/1.3 Georgia,serif}
+  .primer p{margin:.3rem 0}
+  .k{font-size:.72rem;color:var(--muted);margin-right:.5rem}
   .card{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--rule);padding:1rem 1.1rem;margin:0 0 .9rem}
   .card.do{border-left-color:var(--block)} .card.decide{border-left-color:var(--fix)} .card.verify{border-left-color:var(--verify)}
-  .card h3{margin:0 0 .5rem;font:600 1.05rem/1.3 Georgia,serif}
-  .card h3 .n{color:var(--muted);font-weight:400;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;margin-right:.4rem}
-  .tag{font:.7rem/1 ui-monospace,Menlo,monospace;background:var(--tag);padding:.15rem .4rem;border-radius:2px;margin-right:.25rem;color:var(--muted)}
+  .card h3{margin:0 0 .35rem;font:600 1.05rem/1.3 Georgia,serif}
+  .n{color:var(--muted);font-weight:400;font-size:.85rem;margin-right:.4rem}
+  .why{margin:0 0 .5rem}
+  .tag{font-size:.7rem;background:var(--tag);padding:.15rem .4rem;border-radius:2px;margin-right:.25rem;color:var(--muted)}
+  .tag a{color:inherit}
+  .assumes{font-size:.7rem;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q);margin-left:.35rem}
+  .pick{border:0;margin:.8rem 0 0;padding:0}
+  .pick legend{float:left;font-size:.75rem;color:var(--muted);margin-right:1rem;padding:0}
+  .pick label{font-size:.75rem;margin-right:.9rem;cursor:pointer}
+  .draft{clear:both;margin:.45rem 0 0;padding:.45rem .7rem;background:#fff;border:1px dashed var(--rule);opacity:.5}
+  .draft[data-framing]::before{content:attr(data-framing);display:block;font:.65rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .pick:has([value=ask]:checked) [data-framing=ask],.pick:has([value=direct]:checked) [data-framing=direct],
+  .nits li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
+  .evidence{margin-top:.75rem}
+  .lands{clear:both;margin:.45rem 0 0;font-size:.75rem;color:var(--muted)}
+  a.lands{font:.8rem ui-monospace,Menlo,monospace;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
   dl{margin:.5rem 0 0;display:grid;grid-template-columns:9em 1fr;gap:.3rem .75rem}
-  dt{color:var(--muted);font-size:.8rem;font-family:ui-monospace,Menlo,monospace;padding-top:.15em}
+  dt{color:var(--muted);font-size:.8rem;padding-top:.15em}
   dd{margin:0}
   code,.where a{font:.85em ui-monospace,Menlo,monospace}
   .where a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
-  ul.lines{padding-left:1.1rem} ul.lines li{margin:.25rem 0}
-  .primer{border-left:4px solid var(--q);background:var(--card);padding:.9rem 1.1rem;margin:0 0 .9rem}
-  .primer h3{margin:0 0 .35rem;font:600 1rem/1.3 Georgia,serif}
-  .primer p{margin:.35rem 0}
-  .primer .k{font:.75rem ui-monospace,Menlo,monospace;color:var(--muted);margin-right:.4rem}
-  .good{border-left:4px solid var(--ok);padding:.6rem 1rem;background:var(--card);margin:1rem 0}
-  footer{max-width:76ch;margin:3rem auto 2rem;padding:0 1.5rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--rule);padding-top:1rem}
-  @media (max-width:600px){dl{grid-template-columns:1fr}dt{padding-top:.5rem}}
+  ul.nits{list-style:none;padding:0}
+  .nits li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
+  .nits .where{margin-left:.35rem}
+  #tray{position:sticky;bottom:0;max-width:76ch;margin:2rem auto 0;padding:.55rem 1.5rem;background:var(--ink);color:var(--bg);
+        display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
+  #tray[hidden]{display:none}
+  #tray button{font:inherit;background:var(--bg);color:var(--ink);border:0;padding:.35rem .8rem;cursor:pointer}
+  #md{position:fixed;left:-9999px;bottom:4rem;width:min(64ch,90vw);height:14rem;font:.8rem ui-monospace,Menlo,monospace}
+  #md.show{left:auto;right:1rem}
+  footer{margin-top:2rem;padding-top:1rem;padding-bottom:2rem;border-top:1px solid var(--rule);color:var(--muted);font-size:.8rem}
+  @media (max-width:600px){dl{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
   <h1>Council · <a href="https://github.com/acme/shop-api/pull/142">acme/shop-api #142</a> — rate-limit the public API per account with a token bucket</h1>
-  <p class="meta">Single PR, ready for review, on <code>main</code> · head <code>5d1e0c9b</code> · reviewed 2026-10-01</p>
-  <p class="essence"><span class="q">High level context</span>The public API has no limit on how often a caller may send requests, so one misbehaving integration can slow the service for every other account. This PR adds a token-bucket limiter in front of every public route: each account may burst 20 requests and then refills at 5 per second. A request with no tokens left receives a <code>429</code> response with a <code>Retry-After</code> header. Bucket state lives in Redis so that every API instance shares one count per account.</p>
-  <p class="verdict yes"><span class="q">Is this the right direction?</span><b>Yes.</b> A shared per-account limit is the standard answer to one noisy caller degrading everyone, and a token bucket allows the short bursts that real integrations produce. The open question is not the limiter but what happens when Redis is unavailable, because the PR silently chooses to reject every request. That is <a href="#f1">card #1</a>.</p>
+  <p class="meta">Single PR on <code>main</code> · head <code>5d1e0c9b</code> · reviewed 2026-10-01</p>
+  <p class="essence"><span class="q">High level context</span>The public API has no limit on how often a caller may send requests, so one misbehaving integration can slow the service for every account. This PR puts a token-bucket limiter in front of every public route. Each account may burst 20 requests and then refills at 5 per second. Bucket state lives in Redis, so every API instance shares one count per account.</p>
+  <p class="verdict yes"><span class="q">Is this the right direction?</span><b>Yes.</b> A shared per-account limit is the standard answer to one noisy caller slowing everyone, and a token bucket allows the short bursts real integrations produce. The open question is what happens when Redis is down, which is <a href="#f3">card #3</a>.</p>
   <p class="counts"><span><b>2</b> do before merge</span><span><b>2</b> decide</span><span><b>3</b> nits</span></p>
 </header>
-<nav>
-  <a href="#primer">Primer</a><a href="#cards">Findings</a><a href="#nits">Nits</a>
-</nav>
 <main>
 
-<h2 id="primer">Primer — what this review assumed you knew</h2>
-<section class="primer">
-  <h3>Token bucket</h3>
-  <p><span class="k">what it is</span>A token bucket is a rate limit that allows short bursts while holding a steady average. Each account has a bucket holding up to 20 tokens. Every request spends one token, and the bucket refills at 5 tokens per second. A request that finds the bucket empty is rejected.</p>
-  <p class="where"><span class="k">where it lives</span>The limiter lives in <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L18">src/middleware/rateLimit.ts:18</a>.</p>
-  <p><span class="k">why it mattered here</span>Cards #1 and #2 depend on where the bucket is read and written. A count that two requests read at the same moment can let both spend the same token.</p>
-  <p><span class="k">read next</span>The linked <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/docs/rate-limits.md#L1">rate-limit doc</a> states the limits promised to API customers.</p>
-</section>
-<section class="primer">
-  <h3>Fail open and fail closed</h3>
-  <p><span class="k">what it is</span>A protective check must decide what to do when it cannot run. Failing open lets the request through unchecked. Failing closed rejects the request. This codebase's other Redis-backed checks, such as the idempotency cache, fail open and log a warning.</p>
-  <p class="where"><span class="k">where it lives</span>The existing convention lives in <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/idempotency.ts#L40">src/middleware/idempotency.ts:40</a>.</p>
-  <p><span class="k">why it mattered here</span>Card #1 asks which way the new limiter should fail. The PR chooses differently from the rest of the codebase without saying so.</p>
-  <p><span class="k">read next</span>The linked <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/docs/runbooks/redis.md#L12">Redis runbook</a> describes how often Redis has been unavailable.</p>
-</section>
+<details id="primer">
+  <summary>Primer — 2 concepts this page assumes</summary>
+  <section class="primer" id="p-token-bucket">
+    <h3>Token bucket</h3>
+    <p class="idea"><span class="k">idea</span>A token bucket allows short bursts while holding a steady average, because each request spends a token and tokens refill at a fixed rate.</p>
+    <p class="here"><span class="k">here</span>Each account's bucket holds up to 20 tokens and refills at 5 per second. The limiter reads and writes it in Redis at <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L22">rateLimit.ts:22</a>.</p>
+  </section>
+  <section class="primer" id="p-fail-open">
+    <h3>Fail open and fail closed</h3>
+    <p class="idea"><span class="k">idea</span>A protective check must choose what happens when it cannot run: let the request through unchecked, or reject it.</p>
+    <p class="here"><span class="k">here</span>The idempotency cache lets requests through and logs a warning when Redis is down. That convention lives at <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/idempotency.ts#L40">idempotency.ts:40</a>.</p>
+  </section>
+</details>
 
-<h2 id="cards">Findings</h2>
-<h2 id="do" class="do">Do before merge</h2>
-<article class="card do" id="f2">
-  <h3><span class="n">#2</span>Two requests arriving together can both spend the last token</h3>
-  <span class="tag">subtle bugs</span><span class="tag">concurrency</span>
-  <dl>
-    <dt>Context</dt><dd>Every API instance reads an account's token count from Redis, decides whether the request may proceed, and writes the new count back.</dd>
-    <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L31">src/middleware/rateLimit.ts:31</a></dd>
-    <dt>Finding</dt><dd>The read and the write are two separate Redis commands with nothing tying them together. Two instances that read the count at the same moment both see one token left, both admit their request, and both write zero. Under a burst the limit is therefore exceeded by up to one request per instance. Production runs twelve instances, so a caller can briefly reach thirty-two requests where the promise is twenty.</dd>
-    <dt>Recommendation</dt><dd>Move the read, the refill, and the spend into one Lua script run with <code>EVAL</code>, so Redis performs the whole decision as a single step.</dd>
-    <dt>Fix size</dt><dd>One Lua script and one call site.</dd>
-  </dl>
+<h2 class="do">Do before merge</h2>
+<article class="card do" id="f1" data-cite="src/middleware/rateLimit.ts:31">
+  <h3><span class="n">#1</span>Two requests arriving together can both spend the last token</h3>
+  <p class="why">Under a burst, a caller can briefly get past the limit by one request per API instance.</p>
+  <div class="tags"><span class="tag">correctness</span><a class="assumes" href="#p-token-bucket">assumes: token bucket</a></div>
+  <fieldset class="pick">
+    <legend>Comment</legend>
+    <label><input type="radio" name="pick-f1" value="ask" checked> Ask</label>
+    <label><input type="radio" name="pick-f1" value="direct"> Direct</label>
+    <label><input type="radio" name="pick-f1" value="skip"> Skip</label>
+    <p class="lands">Lands on <a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR31">src/middleware/rateLimit.ts:31</a></p>
+    <div class="draft" data-framing="ask" contenteditable="true">Can two instances both read the last token here before either one writes it back? If so, a burst could slip one extra request per instance past the limit.</div>
+    <div class="draft" data-framing="direct" contenteditable="true">This feels like it wants to be one atomic step in Redis. I'd advocate we move the read, refill and spend into a single Lua script so a token can't be spent twice.</div>
+  </fieldset>
+  <details class="evidence">
+    <summary>Evidence</summary>
+    <dl>
+      <dt>Context</dt><dd>Every API instance reads an account's token count from Redis, decides whether the request may proceed, and writes the new count back.</dd>
+      <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L22">rateLimit.ts:22</a> · <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L31">rateLimit.ts:31</a></dd>
+      <dt>Finding</dt><dd>The read and the write are two separate Redis commands with nothing tying them together. Two instances that read at the same moment both see one token left and both admit their request. Production runs twelve instances, so a caller can briefly reach thirty-two requests where the promise is twenty.</dd>
+      <dt>Recommendation</dt><dd>Move the read, the refill and the spend into one Lua script run with <code>EVAL</code>, so Redis makes the whole decision in a single step.</dd>
+      <dt>Fix size</dt><dd>One Lua script and one call site.</dd>
+      <dt>Reply</dt><dd>The author may say one extra request per instance is harmless. The doc promises twenty, though, and the fix is small.</dd>
+    </dl>
+  </details>
+</article>
+<article class="card do" id="f2" data-cite="src/middleware/rateLimit.ts:53">
+  <h3><span class="n">#2</span>The <code>Retry-After</code> header is in milliseconds where clients expect seconds</h3>
+  <p class="why">A well-behaved client told to wait 200 milliseconds would stall for over three minutes after every rejection.</p>
+  <div class="tags"><span class="tag">correctness</span><span class="tag">api compatibility</span></div>
+  <fieldset class="pick">
+    <legend>Comment</legend>
+    <label><input type="radio" name="pick-f2" value="ask" checked> Ask</label>
+    <label><input type="radio" name="pick-f2" value="direct"> Direct</label>
+    <label><input type="radio" name="pick-f2" value="skip"> Skip</label>
+    <p class="lands">Lands on <a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR53">src/middleware/rateLimit.ts:53</a></p>
+    <div class="draft" data-framing="ask" contenteditable="true">Is this value meant to be in milliseconds? Clients read `Retry-After` as seconds, so a 200 ms wait would turn into 200 seconds on their side.</div>
+    <div class="draft" data-framing="direct" contenteditable="true">It looks like `Retry-After` goes out in milliseconds here. Perhaps worth dividing by 1,000 and rounding up, with an assertion in the rejection test?</div>
+  </fieldset>
+  <details class="evidence">
+    <summary>Evidence</summary>
+    <dl>
+      <dt>Context</dt><dd>A rejected request carries a <code>Retry-After</code> header telling the client how long to wait.</dd>
+      <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L53">rateLimit.ts:53</a></dd>
+      <dt>Finding</dt><dd>The header carries the refill delay in milliseconds. The HTTP standard defines the value in seconds, and common client libraries follow it. An integration that honours the header would wait a thousand times too long.</dd>
+      <dt>Recommendation</dt><dd>Divide the delay by 1,000 and round up. Assert the header value in the existing rejection test.</dd>
+      <dt>Fix size</dt><dd>One expression and one assertion.</dd>
+      <dt>Reply</dt><dd>Unlikely to be contested. The standard is unambiguous about seconds.</dd>
+    </dl>
+  </details>
 </article>
 
-<article class="card do" id="f3">
-  <h3><span class="n">#3</span>The <code>Retry-After</code> header is in milliseconds where clients expect seconds</h3>
-  <span class="tag">api compatibility</span>
-  <dl>
-    <dt>Context</dt><dd>A rejected request carries a <code>Retry-After</code> header telling the client how long to wait before trying again.</dd>
-    <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L52">src/middleware/rateLimit.ts:52</a></dd>
-    <dt>Finding</dt><dd>The header is set to the refill delay in milliseconds, so a client told to wait 200 milliseconds reads the value as 200 seconds. The HTTP standard defines the value in seconds, and the common client libraries follow it. A well-behaved integration would therefore stall for minutes after every rejection.</dd>
-    <dt>Recommendation</dt><dd>Divide the delay by 1,000 and round up, and assert the header value in the existing rejection test.</dd>
-    <dt>Fix size</dt><dd>One expression and one assertion.</dd>
-  </dl>
+<h2 class="decide">Decide</h2>
+<article class="card decide" id="f3" data-cite="src/middleware/rateLimit.ts:25">
+  <h3><span class="n">#3</span>When Redis is unavailable, every public request is rejected</h3>
+  <p class="why">A Redis outage would become a full API outage, which is worse than the noisy caller this PR sets out to stop.</p>
+  <div class="tags"><span class="tag">design</span><span class="tag">safety</span><a class="assumes" href="#p-fail-open">assumes: fail open and fail closed</a></div>
+  <fieldset class="pick">
+    <legend>Comment</legend>
+    <label><input type="radio" name="pick-f3" value="ask" checked> Ask</label>
+    <label><input type="radio" name="pick-f3" value="direct"> Direct</label>
+    <label><input type="radio" name="pick-f3" value="skip"> Skip</label>
+    <p class="lands">Lands on <a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR25">src/middleware/rateLimit.ts:25</a></p>
+    <div class="draft" data-framing="ask" contenteditable="true">Is there intentionality behind rejecting everything when Redis can't be reached? The idempotency cache lets requests through in that case, so this looks like the one place that fails the other way.</div>
+    <div class="draft" data-framing="direct" contenteditable="true">I'd wonder if we want this to fail open like the idempotency cache, so a Redis outage doesn't take the API down with it. If failing closed is the intent, perhaps worth saying so in the rate-limit doc with an alert on this path?</div>
+  </fieldset>
+  <details class="evidence">
+    <summary>Evidence</summary>
+    <dl>
+      <dt>Context</dt><dd>The limiter needs Redis to read the bucket, while other Redis-backed checks here let requests through when Redis is down.</dd>
+      <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L25">rateLimit.ts:25</a> · <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/idempotency.ts#L40">idempotency.ts:40</a></dd>
+      <dt>Finding</dt><dd>A Redis error is caught and turned into a 429 response. A Redis outage therefore rejects every public request. The PR body does not mention this choice, and it differs from the idempotency cache.</dd>
+      <dt>Recommendation</dt><dd>Decide which way the limiter fails. Failing open matches the codebase and keeps the API up, at the cost of no limit during the outage. Failing closed needs a doc line and an alert.</dd>
+      <dt>Fix size</dt><dd>One branch in the error handler, or one doc paragraph and one alert.</dd>
+      <dt>Judgement call</dt><dd>If the team prefers rejecting traffic to running unprotected, the current behavior can stay once it is documented.</dd>
+      <dt>Reply</dt><dd>The author may say failing closed is safer. That is a fair position, and the card only asks that it be stated.</dd>
+    </dl>
+  </details>
 </article>
-
-<h2 id="decide" class="decide">Decide</h2>
-<article class="card decide" id="f1">
-  <h3><span class="n">#1</span>When Redis is unavailable, every public request is rejected</h3>
-  <span class="tag">premise</span><span class="tag">operational hardening</span>
-  <dl>
-    <dt>Context</dt><dd>The limiter needs Redis to read the bucket. Other Redis-backed checks in this codebase let requests through when Redis cannot be reached.</dd>
-    <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L24">src/middleware/rateLimit.ts:24</a> · <a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/idempotency.ts#L40">src/middleware/idempotency.ts:40</a></dd>
-    <dt>Finding</dt><dd>A Redis error is caught and turned into a <code>429</code> response. A Redis outage therefore becomes a full API outage, which is worse than the noisy-caller problem the PR sets out to solve. The PR body does not mention this choice, and it contradicts the convention the idempotency cache already follows.</dd>
-    <dt>Recommendation</dt><dd>Decide which way the limiter fails. Failing open matches the codebase and keeps the API up during an outage, at the cost of no limit while Redis is down. If failing closed is intended, state it in the rate-limit doc and add an alert on the error path.</dd>
-    <dt>Fix size</dt><dd>One branch in the error handler, or one doc paragraph and one alert.</dd>
-    <dt>Judgement call</dt><dd>If the team prefers rejecting traffic to running unprotected, the current behavior can stay once it is documented.</dd>
-  </dl>
-</article>
-
-<article class="card decide" id="f4">
+<article class="card decide" id="f4" data-cite="src/middleware/rateLimit.ts:19">
   <h3><span class="n">#4</span>Internal service calls share the customer limit</h3>
-  <span class="tag">premise</span>
-  <dl>
-    <dt>Context</dt><dd>The admin dashboard calls the public API with a service account to load customer data.</dd>
-    <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L19">src/middleware/rateLimit.ts:19</a></dd>
-    <dt>Finding</dt><dd>The limiter applies to every account, including the dashboard's service account. Opening a busy customer page sends about forty requests at once, so the dashboard would receive <code>429</code> responses on ordinary use.</dd>
-    <dt>Recommendation</dt><dd>Exempt service accounts by their existing role, or give them a higher limit through the same configuration.</dd>
-    <dt>Fix size</dt><dd>One condition on the account role.</dd>
-  </dl>
+  <p class="why">The admin dashboard would get 429 responses while loading an ordinary busy customer page.</p>
+  <div class="tags"><span class="tag">design</span><a class="assumes" href="#p-token-bucket">assumes: token bucket</a></div>
+  <fieldset class="pick">
+    <legend>Comment</legend>
+    <label><input type="radio" name="pick-f4" value="ask" checked> Ask</label>
+    <label><input type="radio" name="pick-f4" value="direct"> Direct</label>
+    <label><input type="radio" name="pick-f4" value="skip"> Skip</label>
+    <p class="lands">Lands on <a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR19">src/middleware/rateLimit.ts:19</a></p>
+    <div class="draft" data-framing="ask" contenteditable="true">Would it make sense to treat service accounts differently here? Opening a busy customer page in the admin dashboard sends about forty requests at once.</div>
+    <div class="draft" data-framing="direct" contenteditable="true">Wondering if internal callers should sit outside this limit. I'd advocate we key off the existing service-account role, either exempting it or giving it a higher limit.</div>
+  </fieldset>
+  <details class="evidence">
+    <summary>Evidence</summary>
+    <dl>
+      <dt>Context</dt><dd>The admin dashboard calls the public API with a service account to load customer data.</dd>
+      <dt>Where</dt><dd class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L19">rateLimit.ts:19</a></dd>
+      <dt>Finding</dt><dd>The limiter applies to every account, including the dashboard's service account. A busy customer page sends about forty requests at once, twice the burst size.</dd>
+      <dt>Recommendation</dt><dd>Exempt service accounts by their existing role, or give them a higher limit through the same configuration.</dd>
+      <dt>Fix size</dt><dd>One condition on the account role.</dd>
+      <dt>Reply</dt><dd>The author may plan to move the dashboard off the public API. Until that lands, the dashboard hits this limit.</dd>
+    </dl>
+  </details>
 </article>
 
 <h2 id="nits">Nits</h2>
-<ul class="lines">
-  <li><span class="tag">spec &amp; tests</span> The rate-limit doc still says limits are not enforced yet. — <span class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/docs/rate-limits.md#L4">docs/rate-limits.md:4</a></span></li>
-  <li><span class="tag">types</span> The burst and refill values are bare numbers passed side by side, so swapping them compiles cleanly. — <span class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L12">src/middleware/rateLimit.ts:12</a></span></li>
-  <li><span class="tag">operational hardening</span> Rejected requests are not counted in any metric, so nobody can see which accounts hit the limit. — <span class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a2f4e6d8c3b1a0f9e8d7c6b5a4f3e2d/src/middleware/rateLimit.ts#L50">src/middleware/rateLimit.ts:50</a></span></li>
+<ul class="nits">
+  <li id="n1" data-cite="src/app.ts:24"><input type="checkbox" aria-label="pick nit 1"> <span class="tag">shape</span> <span class="text">The rate-limit doc still says limits are not enforced yet.</span><span class="where"><a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-841254fe75488c1bd4cd7f68f00b4be0e48dcfbc4a16b45847b68295e0e3b27bR24">src/app.ts:24</a></span>
+    <div class="draft" contenteditable="true">nit: the rate-limit doc may want an update alongside this, since `docs/rate-limits.md` still says limits aren't enforced yet.</div></li>
+  <li id="n2" data-cite="src/middleware/rateLimit.ts:12"><input type="checkbox" aria-label="pick nit 2"> <span class="tag">types</span> <span class="text">The burst and refill values are bare numbers passed side by side, so swapping them still compiles.</span><span class="where"><a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR12">src/middleware/rateLimit.ts:12</a></span>
+    <div class="draft" contenteditable="true">nit: looks like burst and refill are two bare numbers side by side, so swapping them would still compile. Perhaps worth an options object?</div></li>
+  <li id="n3" data-cite="src/middleware/rateLimit.ts:54"><input type="checkbox" aria-label="pick nit 3"> <span class="tag">safety</span> <span class="text">Rejected requests are not counted in any metric, so nobody can see which accounts hit the limit.</span><span class="where"><a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR54">src/middleware/rateLimit.ts:54</a></span>
+    <div class="draft" contenteditable="true">nit: is there a metric for rejections somewhere? It'd help to see which accounts are hitting the limit.</div></li>
 </ul>
 
 </main>
+<div id="tray" hidden><span><b class="count">0</b> selected</span><button id="copy" type="button">Copy selected</button><textarea id="md" readonly aria-hidden="true" tabindex="-1"></textarea></div>
 <footer>Nothing was executed; every cite on this page was read in the source at the reviewed commit.</footer>
+<script>
+(() => {
+  const meta = JSON.parse(document.querySelector('meta[name="council"]').content);
+  const key = `council:${meta.owner}/${meta.repo}#${meta.pr}@${meta.head}`;
+  const items = [...document.querySelectorAll('article.card, ul.nits li')];
+  const tray = document.getElementById('tray'), out = document.getElementById('md'), button = document.getElementById('copy');
+  const box = el => el.querySelector('input[type="checkbox"]');
+  const pick = el => box(el) ? (box(el).checked ? 'nit' : 'skip') : el.querySelector('.pick input:checked')?.value || 'skip';
+  const drafts = el => [...el.querySelectorAll('.draft')];
+  const draft = el => box(el) ? drafts(el)[0] : el.querySelector(`.draft[data-framing="${pick(el)}"]`);
+  const picked = () => items.filter(el => pick(el) !== 'skip');
+  const render = () => { tray.querySelector('.count').textContent = picked().length; };
+  function save() {
+    const state = {};
+    for (const el of items) state[el.id] = { pick: pick(el), drafts: drafts(el).map(d => d.innerText) };
+    localStorage.setItem(key, JSON.stringify(state));
+    render();
+  }
+  const saved = JSON.parse(localStorage.getItem(key) || '{}');
+  for (const el of items) {
+    const s = saved[el.id];
+    if (!s) continue;
+    if (box(el)) box(el).checked = s.pick === 'nit';
+    else el.querySelectorAll('.pick input').forEach(r => { r.checked = r.value === s.pick; });
+    drafts(el).forEach((d, i) => { if (typeof s.drafts?.[i] === 'string') d.innerText = s.drafts[i]; });
+  }
+  document.addEventListener('change', save);
+  document.addEventListener('input', e => {
+    const d = e.target.closest?.('.draft');
+    if (!d) return;
+    const el = d.closest('article.card, ul.nits li');
+    if (box(el)) box(el).checked = true;
+    else el.querySelector(`.pick input[value="${d.dataset.framing}"]`).checked = true;
+    save();
+  });
+  const heading = el => {
+    const a = el.querySelector('a.lands');
+    return el.dataset.cite === 'PR' ? '**PR conversation**' : `**[\`${el.dataset.cite}\`](${a ? a.href : ''})**`;
+  };
+  const markdown = () => picked().map(el => `${heading(el)}\n${draft(el).innerText.trim()}`).join('\n\n');
+  button.addEventListener('click', async () => {
+    out.value = markdown();
+    try { await navigator.clipboard.writeText(out.value); button.textContent = 'Copied'; }
+    catch { out.classList.add('show'); out.select(); document.execCommand('copy'); button.textContent = 'Selected: press Cmd+C'; }
+    setTimeout(() => { button.textContent = 'Copy selected'; }, 2000);
+  });
+  tray.hidden = false;
+  render();
+})();
+</script>
 </body>
 </html>
