@@ -32,6 +32,9 @@ task:
     - pr-test-analyzer
     - silent-failure-hunter
   batch: true
+  agentModelOverrides:
+    poteto-agent: openai-codex/gpt-6.1-sol:xhigh
+    poteto-judge: anthropic/claude-opus-5-5:xhigh
 steeringMode: one-at-a-time
 interruptMode: immediate
 advisor:

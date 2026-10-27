@@ -37,6 +37,8 @@ pstack skills use Cursor names. In omp, read this file once per session, then ma
 
 The `task` tool has no `model` field. omp takes a worker's model from the `task.agentModelOverrides` setting for its agent, so pick the agent by the slug the skill names. An agent with no override runs on this session's model.
 
+**Never run a worker on Grok.** pstack's defaults name Grok (`grok-*`, `cursor-grok-*`, `composer-*`) for code delegates, explorers, swarm workers and the second panel seat. In omp every one of those slugs means `poteto-agent`, and `poteto-agent` runs on `openai-codex/gpt-6.1-sol`. So a panel's default of Opus and Grok is Opus and GPT-6.1 sol, and a step that says Grok runs on GPT-6.1 sol. When a skill tells you to fall back to a Grok slug, use `poteto-agent` instead. Never pick, suggest or configure a Grok model, in an override or anywhere else.
+
 | Cursor | omp |
 | --- | --- |
 | A `claude-<family>-<version>-<effort>` slug, such as `claude-opus-5-5-xhigh` | `agent: "poteto-judge"`. |
@@ -51,7 +53,7 @@ The `task` tool has no `model` field. omp takes a worker's model from the `task.
 Follow `setup-pstack` with these changes:
 
 - Detect. `omp models` lists the models this install can use. Write a model as `<provider>/<model>:<thinking>`.
-- Map. omp has two pstack seats. `poteto-agent` takes every role whose default is a Grok slug: feature, refactoring, bug-fix, perf-issue, hillclimb, how explorer, why investigators, reflect tooling, and swarm workers. `poteto-judge` takes every role whose default is a Claude slug: judgment and prose, hardest tasks, how explainer, why synthesizer, and reflect judgment. A panel runs one worker on each seat.
+- Map. omp has two pstack seats. `poteto-agent` takes every role whose default is a Grok slug: feature, refactoring, bug-fix, perf-issue, hillclimb, how explorer, why investigators, reflect tooling, and swarm workers. `poteto-judge` takes every role whose default is a Claude slug: judgment and prose, hardest tasks, how explainer, why synthesizer, and reflect judgment. A panel runs one worker on each seat. `poteto-agent` runs on `openai-codex/gpt-6.1-sol` and `poteto-judge` on `anthropic/claude-opus-5-5`; offer only non-Grok models for either seat.
 - Budget. The budget sets the thinking suffix of both seats: `max`, `xhigh`, `high`, or `medium`.
 - Write. Show the two entries and ask before you change settings. Then set them under `task.agentModelOverrides` in `~/.omp/agent/config.yml`, or have the user pick them for each agent in the `/agents` hub. Write no `pstack-models.mdc`.
 
