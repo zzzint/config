@@ -1,0 +1,16 @@
+{
+  "name": "zzzint",
+  "owner": {
+    "name": "Justin Zint"
+  },
+  "plugins": [
+    {
+      "name": "pstack",
+      "source": "./pstack/plugin",
+      "description": "pstack by poteto, generated for omp from cursor/plugins by pstack/generate.mjs.",
+      "version": "0.15.35-omp.20261027193528",
+      "license": "MIT",
+      "homepage": "https://github.com/cursor/plugins/tree/main/pstack"
+    }
+  ]
+}
