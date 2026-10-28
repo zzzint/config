@@ -103,6 +103,6 @@ lsp:
 plan:
   enabled: false
 browser:
-  headless: false
+  headless: true
 marketplace:
   autoUpdate: auto
