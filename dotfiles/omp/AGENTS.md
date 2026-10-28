@@ -25,6 +25,23 @@ infrastructure, or spend money. Inside a plan I have approved, stop asking again
 The approval runs out when the work moves to a different scope, a different level
 of risk, a different repository, or a different environment.
 
+## Where worktrees go
+
+Create every git worktree inside the repository it belongs to, at
+`.dev/worktrees/<name>`, never in a sibling folder or anywhere else under
+`~/Documents`. Worktrees outside the repository cannot be opened from my editor,
+and scattering them is how five different locations piled up in one project.
+
+Make sure `.dev/` is ignored before creating the first one. If the repository's
+`.gitignore` does not already ignore it, add `.dev/` to `.git/info/exclude`; do
+not commit an ignore rule I did not ask for. Do not switch worktrees to relative
+paths (`--relative-paths`, `git worktree repair --relative-paths`): repair rewrites
+every worktree of the repository at once, and relative links break containers
+that mount a worktree and `.git` at different places.
+
+Remove a worktree you created once its branch is merged or abandoned. Leave
+worktrees you did not create where they are.
+
 ## While writing it
 
 Types are how code is read. A precise signature tells the next reader what this

@@ -14,13 +14,15 @@ The rules: <paste FORMAT.md § Language and § Comments>
 
 # Fields to check
 - header: p.essence, p.verdict
+- scope panel: the why in p.scope-verdict (after its label and verdict word), each cut and unasked span.text
 - each card: p.why, every Evidence dd except dd.where, the ask draft, the direct draft
+- each follow-up: span.text, its draft
 - each nit: span.text, its draft
 - each primer section: p.idea, p.here
 
 The reader is a strong engineer new to this codebase. Ordinary engineering vocabulary (JSON, SQL, a status code, a middleware) is plain. A name this codebase or this review coined is not. The Primer is stricter: p.idea uses only ordinary words, and p.here may use a repo name only if it is shown as code with a link.
 
-Drafts are also judged on voice (§ Comments "The voice" and its posted models): the ask draft leads with a question or a softened, tentative read ("It looks like…", "Presuming…"), never a flat declaration followed by a question; the direct draft opens with a softened read and takes a gentle position ("I'd advocate we…", "Perhaps worth…") naming the design move, not the edit; a nit draft starts `nit:` and reads light ("looks like…", "may want to…", a small question), not as a flat statement of fact; each is at most 2 sentences with at most three code spans; each reads in a plain first-person "I"/"we" voice, with one hedge at most. A draft that declares a verdict and then asks, or states a bare imperative, gets a REWRITE.
+Drafts are also judged on voice (§ Comments "The voice" and its posted models): the ask draft leads with a question or a softened, tentative read ("It looks like…", "Presuming…"), never a flat declaration followed by a question; the direct draft opens with a softened read and takes a gentle position ("I'd advocate we…", "Perhaps worth…") naming the design move, not the edit; a nit draft starts `nit:` and reads light ("looks like…", "may want to…", a small question), not as a flat statement of fact; a follow-up draft reads as a ticket suggestion, not a gate ("Perhaps worth a follow-up ticket for…", "Wondering if this belongs in its own PR…"), with no `nit:` prefix; each is at most 2 sentences with at most three code spans; each reads in a plain first-person "I"/"we" voice, with one hedge at most. A draft that declares a verdict and then asks, or states a bare imperative, gets a REWRITE.
 
 # For each field, return one of
 - PASS
@@ -30,7 +32,7 @@ Drafts are also judged on voice (§ Comments "The voice" and its posted models):
 A rewrite must keep the field's caps: its sentence count, at most 25 words per sentence (35 in a draft), one idea per sentence, no ";" and no " — " outside drafts, ending in "." (a draft may end in "?"). Meet a cap by splitting and plainer words, never by dropping a fact. Never invent a fact. MISSING is the right answer when the page does not say.
 
 # Output
-Findings in page order, keyed by location and field (e.g. "#3 Finding: REWRITE: …", "#3 ask: PASS", "n2 text: …", "p-run-controller here: …"). Then one line: the count of PASS / REWRITE / MISSING.
+Findings in page order, keyed by location and field (e.g. "scope why: PASS", "cut 1: …", "#3 Finding: REWRITE: …", "#3 ask: PASS", "u1 draft: …", "n2 text: …", "p-run-controller here: …"). Then one line: the count of PASS / REWRITE / MISSING.
 ```
 
 ## Chair's use of the result

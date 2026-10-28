@@ -18,7 +18,8 @@ Clone (READ-ONLY, with history): /tmp/<repo>-<N>. Diff: /tmp/<repo>-<N>/PR<N>.di
 4. Remedy correct? Would the proposed fix work (e.g. "correlate by call id" when retries mint new ids)? Right finding, wrong remedy → UPHOLD as question, remedy removed.
 5. Consumer-visible? Trace one concrete path where a user, operator or downstream service sees the consequence. None → DEMOTE to nit. A bigger path than the seat saw → ESCALATE and name it with lines.
    Types exemption: judge a `types` finding on whether the proposed shape makes a wrong call or invalid state unwritable. Yes → UPHOLD at its severity, even with no runtime consequence today. Only a rename → DEMOTE to nit.
-6. Worth the author's time? True, but the author would reasonably not act → DROP.
+6. Now or later? Real, but convoluted, not introduced by this PR, and its fix needs a major change to the diff → FOLLOW-UP. True, but the author would reasonably not act → DROP. If this PR introduced it, or the fix fits without a major change, it stays now, at its severity.
+   Guard: a `block` is never FOLLOW-UP or DROP on this step alone. Give the verdict marked "guard: chair re-read"; the chair decides after re-reading the source.
 
 A finding with several lens tags survives if any tag's test holds; say which.
 
@@ -30,16 +31,21 @@ Skip steps 1, 3 and 5. Test three things only:
 
 # Output
 One line per finding, in F order:
-- F<k> · UPHOLD | DEMOTE to <sev> | DROP | ESCALATE to <sev> — one-line reason — your own cite file:line.
+- F<k> · UPHOLD | DEMOTE to <sev> | DROP | ESCALATE to <sev> | FOLLOW-UP — one-line reason — your own cite file:line.
+- F<k> · not reached — for a finding the budget left unchecked.
 Then one short paragraph per lens seen in this batch: how it inflates or what it missed (e.g. "rates config-dependent paths block", "never opened the diff").
 
 # Constraints
 READ-ONLY: no edits, no git write commands, no installs, no tests. Never invent a cite.
+Budget: about 40 tool calls for the whole batch. Then stop: give verdicts for what you checked and "not reached" for the rest.
 ```
 
 ## Chair's use
 
-- Every verdict is final, ESCALATE included. The chair re-reads in source only what lands in *Do before merge*.
+- Every verdict is final, ESCALATE included, except a guarded `block`. The chair re-reads in source only what lands in *Do before merge*.
+- A `block` marked "guard: chair re-read" stays in *Do before merge* until the chair re-reads it in source and agrees with the FOLLOW-UP or DROP.
+- FOLLOW-UP goes to the page's Follow-ups list ([`FORMAT.md`](FORMAT.md) § Card) and to the ledger as an Open entry, with the reason and the skeptic's cite.
+- A "not reached" finding is graded as the seat filed it. Anything that would land in *Do before merge* is re-read in source first.
 - The reason is evidence. Write it into the card's Finding in plain words, without the verdict word; the page never says "upheld", "demoted" or "escalated".
 - A lens a skeptic calls systematically inflated has each of its upheld findings re-read in source before it becomes a card. Never move a finding to Nits to make room.
 - DROP goes to the ledger under Closed in #N, with the reason and the skeptic's cite. The per-lens paragraphs become its "Lens weights" line.

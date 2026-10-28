@@ -6,11 +6,18 @@ Enforces the caps in FORMAT.md on the selectors in REPORT.html:
   * sentences per field, no ';' and no spaced em dash (prose only, drafts exempt), ends with '.' (a draft may end '?'), >= 5 words
     (Fix size is exempt from the word minimum);
   * every card has non-empty ask and direct drafts, and the ask draft contains '?';
-  * a draft holds at most 3 code spans, and no two-word opener starts more than a quarter of the page's drafts;
+  * a draft holds at most 3 code spans, and no two-word opener starts more than a quarter of the page's drafts
+    (cards, follow-ups and nits together);
   * no link to another local .html page, except a carried-forward card's "from #M" tag; none in the primer;
   * primer optional, at most 3 concepts, only p.idea / p.here / p.read;
-  * <meta name="council"> present, valid JSON, every key valid, counts matching the page;
-  * every card and nit has an a.lands link to its data-cite in the PR's Files changed view
+  * section#scope first in <main>: class and <b> agree (needed, trim, questionable), why in 1-2 sentences,
+    needed has no cuts, trim has 1 to 5, each cut has span.lines "−N", each cut and unasked item is one sentence
+    with a head-SHA blob link and no a.lands, draft or checkbox, and an h3 comes before each list;
+  * follow-ups (h2#followups + ul.followups li#u<N>, after the cards, before the nits) follow the nit rules,
+    without the "nit:" prefix;
+  * <meta name="council"> present, valid JSON, every key valid, counts matching the page, scope matching the panel,
+    lean matching span.lean, at least the sum of the cuts, and 0 when the scope is needed;
+  * every card, follow-up and nit has an a.lands link to its data-cite in the PR's Files changed view
     (#diff-<sha256 of path>R<line>), or to the PR itself when data-cite is "PR";
   * with --diff: every data-cite line sits inside a hunk of the PR diff, so GitHub can attach the comment there.
 Exit 0 when clean, 1 with one line per failure and a count. Sentence quality is the editor's job (EDITOR.md)."""
@@ -31,6 +38,7 @@ FOOTER = "Nothing was executed; every cite on this page was read in the source a
 EVIDENCE = ["Context", "Where", "Finding", "Recommendation", "Fix size", "Judgement call", "Reply"]
 EVIDENCE_SENTENCES = {"Context": (1, 1), "Finding": (1, 4), "Recommendation": (1, 3), "Judgement call": (1, 2), "Reply": (1, 2)}
 GROUPS = ("do", "decide", "verify")
+SCOPES = {"needed": "Needed.", "trim": "Trim.", "questionable": "Questionable."}
 CITE = re.compile(r"(?P<path>\S+):(?P<a>\d+)(?:-(?P<b>\d+))?|PR")
 
 
@@ -150,11 +158,19 @@ def show(t):
     return t if len(t) <= 90 else t[:87] + "..."
 
 
+def lis(ul):
+    return [k for k in ul.kids if isinstance(k, Node) and k.tag == "li"] if ul is not None else []
+
+
 class Floor:
     def __init__(self, diff=None):
         self.fails = []
         self.diff = diff
         self.target = None  # (owner, repo, pr) from the meta, for a.lands
+        self.head = None  # full head SHA from the meta, for the scope panel's blob links
+        # A page written before the Scope panel existed: no meta "scope" key and no section#scope.
+        # It is held to the rules of its time, so editing its drafts and re-running floor still works.
+        self.pre_scope = False
 
     def lands(self, where, node, cite):
         if not CITE.fullmatch(cite):
@@ -211,6 +227,22 @@ class Floor:
             if (n := words(s)) > cap:
                 self.fail(where, f"sentence {i} has {n} words (cap {cap}): {show(s)}")
 
+    def meta_scope(self, data, page):
+        """The meta's scope and lean against the Scope panel."""
+        scope, lean = data.get("scope"), data.get("lean")
+        if not isinstance(scope, str) or scope not in SCOPES:
+            self.fail("meta", f"'scope' must be {', '.join(SCOPES)}")
+        elif page["scope"] and scope != page["scope"]:
+            self.fail("meta", f"scope is {scope!r} but section#scope says {page['scope']!r}")
+        if not isinstance(lean, int) or isinstance(lean, bool) or lean < 0:
+            return self.fail("meta", "'lean' missing or not an integer >= 0")
+        if lean < page["cut"]:
+            self.fail("meta", f"lean is {lean} but the cuts add up to {page['cut']} lines")
+        if scope == "needed" and lean:
+            self.fail("meta", f"lean is {lean} but must be 0 when scope is needed")
+        if page["lean"] is not None and lean != page["lean"]:
+            self.fail("meta", f"lean is {lean} but span.lean says {page['lean']}")
+
     def meta(self, root, page):
         m = root.one("meta", name="council")
         if m is None:
@@ -237,14 +269,18 @@ class Floor:
         for k, allowed in (("tier", ("light", "full")), ("direction", ("yes", "maybe", "no"))):
             if isinstance(data.get(k), str) and data[k] not in allowed:
                 self.fail("meta", f"'{k}' must be {' or '.join(allowed)}")
+        if self.pre_scope:
+            if isinstance(data.get("counts"), dict):
+                data["counts"].setdefault("followups", 0)
+        else:
+            self.meta_scope(data, page)
+        keys = (*GROUPS, "followups", "nits")
         counts = data.get("counts")
-        if not isinstance(counts, dict) or any(not isinstance(counts.get(k), int) for k in ("do", "decide", "verify", "nits")):
-            return self.fail("meta", "'counts' must hold integer do, decide, verify, nits")
-        for k in GROUPS:
+        if not isinstance(counts, dict) or any(not isinstance(counts.get(k), int) for k in keys):
+            return self.fail("meta", f"'counts' must hold integer {', '.join(keys)}")
+        for k in keys:
             if counts[k] != page[k]:
                 self.fail("meta", f"counts.{k} is {counts[k]} but the page has {page[k]}")
-        if counts["nits"] != page["nits"]:
-            self.fail("meta", f"counts.nits is {counts['nits']} but the page has {page['nits']}")
         if page["direction"] and data.get("direction") != page["direction"]:
             self.fail("meta", f"direction is {data.get('direction')!r} but p.verdict says {page['direction']!r}")
 
@@ -312,6 +348,96 @@ class Floor:
             if read is not None and len(read.all("a")) != 1:
                 self.fail(f"{where} p.read", "needs exactly one link")
         return slugs
+
+    def scope(self, root):
+        """section#scope, first in <main>. Returns what meta() compares: the verdict, span.lean, the sum of the cuts."""
+        out = {"scope": None, "lean": None, "cut": 0}
+        sec = root.one("section", id="scope")
+        if sec is None:
+            if not self.pre_scope:
+                self.fail("scope", "missing section#scope (required on every page written since the panel was added)")
+            return out
+        main = root.one("main")
+        if main is None or next((k for k in main.kids if isinstance(k, Node)), None) is not sec:
+            self.fail("scope", "section#scope must be the first child of <main>, before the primer")
+        verdict = [c for c in sec.cls if c in SCOPES]
+        if "scope" not in sec.cls or len(verdict) != 1:
+            self.fail("scope", f'class must be "scope" plus one of {", ".join(SCOPES)}')
+        else:
+            out["scope"] = verdict[0]
+        p = sec.one("p", "scope-verdict")
+        if p is None:
+            self.fail("scope", "missing p.scope-verdict")
+        else:
+            b = p.one("b")
+            answer = clean(text(b)) if b else ""
+            if answer not in SCOPES.values():
+                self.fail("p.scope-verdict", f"needs <b>{'</b>, <b>'.join(SCOPES.values())}</b>, found {answer!r}")
+            elif out["scope"] and answer != SCOPES[out["scope"]]:
+                self.fail("p.scope-verdict", f"class {out['scope']!r} disagrees with <b>{answer}</b>")
+            self.field("p.scope-verdict", text(p, lambda n: "q" in n.cls or n is b), count=(1, 2))
+        kids, lists = [k for k in sec.kids if isinstance(k, Node)], {}
+        for i, k in enumerate(kids):
+            name = next((c for c in k.cls if c in ("cuts", "unasked")), None) if k.tag == "ul" else None
+            if name:
+                lists[name] = k
+                if i == 0 or kids[i - 1].tag != "h3":
+                    self.fail("scope", f"ul.{name} needs its h3 just before it")
+                if not lis(k):
+                    self.fail("scope", f"ul.{name} is empty; omit it and its h3")
+            elif k.tag == "h3":
+                if i + 1 == len(kids) or kids[i + 1].tag != "ul":
+                    self.fail("scope", "an h3 without its list; omit both when the list is empty")
+            elif not (k.tag == "p" and "scope-verdict" in k.cls):
+                self.fail("scope", f"only p.scope-verdict, h3, ul.cuts and ul.unasked belong here, found <{k.tag}>")
+        cuts = lis(lists.get("cuts"))
+        if out["scope"] == "needed" and cuts:
+            self.fail("scope", "needed has no cuts; a page with cuts is trim")
+        if out["scope"] == "trim" and not cuts:
+            self.fail("scope", "trim needs at least one cut")
+        if len(cuts) > 5:
+            self.fail("scope", f"{len(cuts)} cuts (at most 5)")
+        for i, li in enumerate(cuts, 1):
+            self.scope_item(f"scope cut {i}", li)
+            span = li.one("span", "lines")
+            m = re.fullmatch(r"[\u2212-](\d+)", clean(text(span)) if span else "")
+            if not m or int(m[1]) < 1:
+                self.fail(f"scope cut {i}", 'needs span.lines "\u2212N" with N >= 1')
+            else:
+                out["cut"] += int(m[1])
+        for i, li in enumerate(lis(lists.get("unasked")), 1):
+            self.scope_item(f"scope unasked {i}", li)
+        if cuts:
+            lean = sec.one("span", "lean")
+            m = re.fullmatch(r"about (\d+) lines?", clean(text(lean)) if lean else "")
+            if m:
+                out["lean"] = int(m[1])
+            else:
+                self.fail("scope", 'the "Could cut" h3 needs span.lean "about N lines"')
+        return out
+
+    def scope_item(self, where, li):
+        """A cut or an unasked item: one sentence and a head-SHA blob link to its data-cite. Not a comment."""
+        cite = li.attrs.get("data-cite", "")
+        m = CITE.fullmatch(cite)
+        if m is None or cite == "PR":
+            self.fail(where, 'data-cite must be "<path>:<line>" or "<path>:<a>-<b>"')
+        if li.all("a", "lands") or li.all("div", "draft") or li.all("input"):
+            self.fail(where, "scope items are not comments: no a.lands, draft or checkbox")
+        t = li.one("span", "text")
+        if t is None:
+            self.fail(where, "missing span.text")
+        else:
+            self.field(f"{where} span.text", text(t), count=(1, 1))
+        w = li.one("span", "where")
+        links = w.all("a") if w else []
+        if len(links) != 1:
+            return self.fail(where, "needs span.where with one link")
+        if self.target and self.head and m and cite != "PR":
+            owner, repo, _ = self.target
+            want = f"https://github.com/{owner}/{repo}/blob/{self.head}/{m['path']}#L{m['a']}" + (f"-L{m['b']}" if m["b"] else "")
+            if links[0].attrs.get("href") != want:
+                self.fail(where, f"link should be the head-SHA blob link {want}, found {links[0].attrs.get('href')!r}")
 
     def card(self, art, slugs):
         cid = art.attrs.get("id", "")
@@ -399,15 +525,20 @@ class Floor:
             if (n := openers.count(opener)) > limit:
                 self.fail("drafts", f'{n} of {len(openers)} drafts open with "{opener}" (at most {limit}); vary the shapes')
 
-    def nit(self, li):
-        nid = li.attrs.get("id", "")
-        where = f"#{nid or '?'}"
-        if not re.fullmatch(r"n\d+", nid):
-            self.fail(where, 'nit needs id="n<N>"')
+    def item(self, li, prefix):
+        """A nit (n<N>) or a follow-up (u<N>): one unchecked checkbox, a tag, one sentence, a.lands and one draft."""
+        kind = "nit" if prefix == "n" else "follow-up"
+        iid = li.attrs.get("id", "")
+        where = f"#{iid or '?'}"
+        m = re.fullmatch(rf"{prefix}(\d+)", iid)
+        if not m:
+            self.fail(where, f'{kind} needs id="{prefix}<N>"')
         self.lands(where, li, li.attrs.get("data-cite", ""))
         boxes = [i for i in li.all("input") if i.attrs.get("type") == "checkbox"]
         if len(boxes) != 1 or "checked" in boxes[0].attrs:
             self.fail(where, "needs one unchecked checkbox")
+        elif prefix == "u" and m and boxes[0].attrs.get("aria-label") != f"pick follow-up {m[1]}":
+            self.fail(where, f'checkbox needs aria-label="pick follow-up {m[1]}"')
         if li.one("span", "tag") is None:
             self.fail(where, "missing span.tag")
         cite = li.one("span", "where")
@@ -424,9 +555,26 @@ class Floor:
         if d.attrs.get("contenteditable") != "true":
             self.fail(where, 'draft needs contenteditable="true"')
         body = clean(text(d))
-        if not body.startswith("nit:"):
+        if prefix == "n" and not body.startswith("nit:"):
             self.fail(f"{where} draft", f"must start with 'nit:': {show(body)}")
+        if prefix == "u" and body.lower().startswith("nit:"):
+            self.fail(f"{where} draft", f"a follow-up is a ticket suggestion, not a nit; drop 'nit:': {show(body)}")
         self.field(f"{where} draft", body, count=(1, 2), cap=35, ends=(".", "?"), prose=False)
+
+    def followups(self, root, cards):
+        """h2#followups then a non-empty ul.followups, after the last card and before h2#nits; or neither."""
+        h2, ul = root.one("h2", id="followups"), root.one("ul", "followups")
+        if h2 is None and ul is None:
+            return []
+        if h2 is None or not lis(ul):
+            self.fail("follow-ups", "needs both h2#followups and a non-empty ul.followups, or neither")
+            return lis(ul)
+        pos = {id(n): i for i, n in enumerate(root.walk())}
+        nits = root.one("h2", id="nits")
+        if not pos[id(h2)] < pos[id(ul)] or any(pos[id(c)] > pos[id(h2)] for c in cards) \
+                or (nits is not None and pos[id(nits)] < pos[id(ul)]):
+            self.fail("follow-ups", "h2#followups and ul.followups go after the last card and before h2#nits")
+        return lis(ul)
 
     def links(self, root):
         for a in root.all("a"):
@@ -454,7 +602,12 @@ class Floor:
             self.target = (data["owner"], data["repo"], int(data["pr"]))
         except (ValueError, KeyError, TypeError):
             self.target = None  # meta() reports the problem
+        else:
+            self.pre_scope = "scope" not in data and root.one("section", id="scope") is None
+            head = data.get("head")
+            self.head = head if isinstance(head, str) and re.fullmatch(r"[0-9a-f]{40}", head) else None
         direction = self.header(root)
+        scope = self.scope(root)
         slugs = self.primer(root)
         cards = root.all("article", "card")
         for art in cards:
@@ -463,10 +616,12 @@ class Floor:
         for g in GROUPS:
             if any(g in c.cls for c in cards) and g not in heads:
                 self.fail("groups", f"cards in {g!r} but no h2.{g}")
-        ul = root.one("ul", "nits")
-        nits = [k for k in ul.kids if isinstance(k, Node) and k.tag == "li"] if ul else []
+        followups = self.followups(root, cards)
+        for li in followups:
+            self.item(li, "u")
+        nits = lis(root.one("ul", "nits"))
         for li in nits:
-            self.nit(li)
+            self.item(li, "n")
         self.variety(root)
         self.links(root)
         tray = root.one("div", id="tray")
@@ -475,11 +630,13 @@ class Floor:
         scripts = root.all("script")
         if len(scripts) != 1 or "src" in scripts[0].attrs:
             self.fail("script", f"needs exactly one inline <script>, found {len(scripts)}")
+        elif followups and "ul.followups li" not in scripts[0].raw():
+            self.fail("script", "the tray script does not pick up ul.followups li; copy the script from REPORT.html")
         foot = root.one("footer")
         if foot is None or clean(text(foot)) != FOOTER:
             self.fail("footer", f'must read "{FOOTER}"')
         page_counts = {g: sum(g in c.cls for c in cards) for g in GROUPS}
-        self.meta(root, {**page_counts, "nits": len(nits), "direction": direction})
+        self.meta(root, {**page_counts, "followups": len(followups), "nits": len(nits), "direction": direction, **scope})
         return self.fails
 
 

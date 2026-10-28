@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 Review a PR the way a **council** would. **Seats** each look through one lens, **skeptics** try to knock down what they found, the **chair** (you) grades what survives, and an **editor** reads the finished page cold. The output is one HTML page per PR. Each card carries two comment drafts, one that asks and one that says it directly; the user picks, edits and copies on the page. This skill never writes to the PR.
 
-**Hard rules:** every sub-agent is read-only (no edits, no git write commands, no installs, no test runs). The chair writes only the `/tmp` clone, `reports/` and `ledgers/` beside this file. A question answerable by reading more code is answered here, never handed to the user. Do not load other skills.
+**Hard rules:** every sub-agent is read-only (no edits, no git write commands, no installs, no test runs). The chair writes only the `/tmp` clone and the state folder `~/.local/state/council/`, which holds `reports/` and `ledgers/`; create it when missing. Nothing is written beside this file: an upgrade of the plugin replaces this folder. A question answerable by reading more code is answered here, never handed to the user. Do not load other skills.
 
 ## Stack ledger
 
-`ledgers/<owner>-<repo>.md` holds one block per stack (a single PR is a stack of one). It opens with one line naming the stack order and passes done, then three sections of one-line entries, each with a `file:line` where one exists:
+`~/.local/state/council/ledgers/<owner>-<repo>.md` holds one block per stack (a single PR is a stack of one). It opens with one line naming the stack order and passes done, then three sections of one-line entries, each with a `file:line` where one exists:
 
-- `## Open entries (for #N)` — what a later PR must answer: items the body defers ("rides with #M"), consequences traced only so far, separate ticket candidates.
+- `## Open entries (for #N)` — what a later PR must answer: items the body defers ("rides with #M"), consequences traced only so far, follow-ups, separate ticket candidates.
 - `## Posted upstream` — comments the user posted that later code could confirm, answer or strengthen.
 - `## Closed in #N` — entries this pass answered, with verdict and line, plus what the skeptics and chair killed and why.
 
@@ -22,7 +22,7 @@ Review a PR the way a **council** would. **Seats** each look through one lens, *
 - **Stack** — a list of PRs, reviewed base → head, one pass per PR, serially, carrying the ledger.
 - **Queue** — no PR given. Run `gh search prs --review-requested=@me --state=open --json number,title,repository,author,url,updatedAt`, then per PR `gh pr view <N> --repo <owner>/<repo> --json headRefOid,baseRefName,headRefName,additions,deletions,files` (search has no head SHA). Print a triage table: PR, size, risk paths, stack membership (base branch is another open PR's head), tier. Skip as up to date a PR whose report's `<meta name="council">` `head` equals `headRefOid`. Stacks run serially; independent PRs may run concurrently within the host's agent cap.
 
-Any run that reviews more than one PR (a stack, a list, or the queue) ends with the index: run `python3 index.py` here and open `reports/index.html`, one row per page with direction and counts.
+Any run that reviews more than one PR (a stack, a list, or the queue) ends with the index: run `python3 index.py` here and open `~/.local/state/council/reports/index.html`, one row per page with direction, scope and counts.
 
 ## Steps (per PR)
 
@@ -58,19 +58,19 @@ Done when: every non-nit finding has an F-number, a PR-added anchor and its lens
 
 Batches of about 8 findings, grouped by code region, one skeptic each, all in one concurrent batch, from [`SKEPTIC.md`](SKEPTIC.md).
 
-Done when: every F-number has a verdict and a skeptic cite.
+Done when: every F-number has a verdict and a skeptic cite, or is marked not reached.
 
 ### 6. Grade
 
-`block` → *Do before merge*. `fix` → *Do before merge*, or *Decide* when fix size or a judgement call makes a fast-follow honest. `question` → *Decide*. `verify` → *Verify in #N*. `nit` → Nits. Apply verdicts per SKEPTIC.md § Chair's use. A type change that fixes another finding goes into that card's Recommendation.
+`block` → *Do before merge*. `fix` → *Do before merge*, or *Decide* when fix size or a judgement call makes a fast-follow honest. `question` → *Decide*. `verify` → *Verify in #N*. `nit` → Nits. FOLLOW-UP → the Follow-ups list (and an Open entry in the ledger). Apply verdicts per SKEPTIC.md § Chair's use, including the `block` guard and not-reached findings. A type change that fixes another finding goes into that card's Recommendation.
 
-Done when: every survivor has a group and each *Do before merge* finding was re-read in source.
+Done when: every survivor has a group or is a follow-up, and each *Do before merge* finding was re-read in source.
 
 ### 7. Write the page
 
-Fill [`REPORT.html`](REPORT.html) into `reports/<owner>-<repo>-<N>.html`, matching [`EXAMPLE.html`](EXAMPLE.html). [`FORMAT.md`](FORMAT.md) owns page order, card fields, drafts and language caps. Fill `<meta name="council">` for index.py. Direction comes from the `design` lens's goal answer. Cards still open from an earlier PR in the stack carry forward with a "from #M" tag. Choose each card's and nit's `data-cite`, then run `python3 lands.py <page>` to write every `a.lands` link from it. Never compute the path hash by hand.
+Fill [`REPORT.html`](REPORT.html) into `~/.local/state/council/reports/<owner>-<repo>-<N>.html`, matching [`EXAMPLE.html`](EXAMPLE.html). [`FORMAT.md`](FORMAT.md) owns page order, card fields, drafts and language caps. Fill `<meta name="council">` for index.py, including `scope`, `lean` and `counts.followups`. Direction comes from the `design` lens's goal answer. Fill the Scope panel from the `shape` seat's Scope block. Cards still open from an earlier PR in the stack carry forward with a "from #M" tag. Choose each card's, nit's and follow-up's `data-cite`, then run `python3 lands.py <page>` to write every `a.lands` link from it. Never compute the path hash by hand.
 
-Done when: every survivor is a card or nit with head-SHA links, every card has both drafts and a Reply, and every card and nit has a landing line in the PR diff linked from `a.lands` (FORMAT.md § Card).
+Done when: the Scope panel is filled, every survivor is a card, follow-up or nit with head-SHA links, every card has both drafts and a Reply, and every card, follow-up and nit has a landing line in the PR diff linked from `a.lands` (FORMAT.md § Card).
 
 ### 8. Primer
 
@@ -86,12 +86,12 @@ Done when: floor.py passes and no MISSING remains.
 
 ### 10. Open and report
 
-`open <page>`. In chat give only the direction, counts by group, card titles one line each under their group, and the path. With more than one PR: open `reports/index.html` instead of each page, and give one table, one row per PR, with the columns PR · label · direction · do · decide · verify · nits, then the index path.
+`open <page>`. In chat give only the direction, the scope verdict, counts by group (follow-ups included), card titles one line each under their group, and the path. With more than one PR: open `~/.local/state/council/reports/index.html` instead of each page, and give one table, one row per PR, with the columns PR · label · direction · scope · do · decide · verify · follow-ups · nits, then the index path.
 
 Done when: the page is open and the report is in chat.
 
 ### 11. Ledger
 
-Rewrite this stack's block: move answered entries to Closed in #N, add deferrals and separate ticket candidates, record what was killed and why, and add a "Lens weights" line from the skeptics.
+Rewrite this stack's block: move answered entries to Closed in #N, add deferrals, follow-ups and separate ticket candidates as Open entries, record what was killed and why, and add a "Lens weights" line from the skeptics.
 
 Done when: the ledger agrees with the page.

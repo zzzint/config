@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fill every a.lands link on a council page from its data-cite. Usage: python3 lands.py <page.html>
+"""Fill every a.lands link on a council page (cards, follow-ups, nits) from its data-cite. Usage: python3 lands.py <page.html>
 
 The chair writes data-cite ("<path>:<line>", "<path>:<a>-<b>" or "PR") and leaves the a.lands href
 and text as anything; this rewrites both from data-cite and the page's <meta name="council">.
@@ -35,7 +35,7 @@ def fill(page: str) -> str:
                       f'<a class="lands" href="{href(owner, repo, pr, cite)}">{html.escape(text)}</a>', block, flags=re.S)
 
     page = re.sub(r'<article class="card[^>]*>.*?</article>', item, page, flags=re.S)
-    return re.sub(r'<li id="n\d+"[^>]*>.*?</li>', item, page, flags=re.S)
+    return re.sub(r'<li id="[nu]\d+"[^>]*>.*?</li>', item, page, flags=re.S)
 
 
 if __name__ == "__main__":

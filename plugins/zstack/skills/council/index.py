@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Rebuild the council index. Usage: python3 index.py [reports-dir]
 
-Reads <meta name="council"> from every page in reports-dir (default: reports/ beside this script) and
+Reads <meta name="council"> from every page in reports-dir (default: ~/.local/state/council/reports) and
 writes reports-dir/index.html: one table, newest reviewed first. Pages without the meta (old format)
-are listed by filename under "Older pages"."""
+are listed by filename under "Older pages"; pages from before the scope panel show "—" for Scope and Follow-ups."""
 import html
 import json
 import re
@@ -12,6 +12,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 DIRECTIONS = ("yes", "maybe", "no")
+SCOPES = ("needed", "trim", "questionable")
 STYLE = """
   :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
         --block:#a4262c;--fix:#b3660a;--q:#2f5f8f;--verify:#5a4a7a;--ok:#2f6b3a}
@@ -31,6 +32,7 @@ STYLE = """
   .num{text-align:right}
   .dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.35rem;background:var(--rule)}
   .yes .dot{background:var(--ok)} .maybe .dot{background:var(--fix)} .no .dot{background:var(--block)}
+  .scope.needed .dot{background:var(--ok)} .scope.trim .dot{background:var(--fix)} .scope.questionable .dot{background:var(--block)}
   a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
   ul.older{padding-left:1.1rem;font:.85rem ui-monospace,Menlo,monospace} ul.older li{margin:.2rem 0}
 """
@@ -65,11 +67,18 @@ def row(path, m):
     e = lambda v: html.escape(str(v if v is not None else ""))
     d = m.get("direction") if m.get("direction") in DIRECTIONS else ""
     c = m.get("counts") or {}
-    nums = "".join(f'<td class="num">{e(c.get(k, ""))}</td>' for k in ("do", "decide", "verify", "nits"))
+    num = lambda k, missing="": f'<td class="num">{e(c.get(k, missing))}</td>'
+    nums = "".join(num(k) for k in ("do", "decide", "verify")) + num("followups", "—") + num("nits")
+    s, lean = m.get("scope"), m.get("lean")
+    if s in SCOPES:
+        trim = f" \u2212{lean}" if isinstance(lean, int) and not isinstance(lean, bool) and lean > 0 else ""
+        scope = f'<td class="mono scope {s}"><span class="dot"></span>{s}{e(trim)}</td>'
+    else:
+        scope = '<td class="mono">—</td>'
     title = re.sub(r"`([^`]+)`", r"<code>\1</code>", e(m.get("title")))
     return (f'<tr class="{d}"><td><a href="{e(path.name)}">{e(m["owner"])}/{e(m["repo"])}#{e(m["pr"])}</a></td>'
             f'<td>{title}</td><td>{e(m.get("author"))}</td><td class="mono">{e(m.get("label") or "—")}</td><td class="mono">{e(m.get("tier"))}</td>'
-            f'<td class="{d}"><span class="dot"></span>{e(d or "?")}</td>{nums}'
+            f'<td class="{d}"><span class="dot"></span>{e(d or "?")}</td>{scope}{nums}'
             f'<td class="mono">{e(str(m.get("head", ""))[:8])}</td><td class="mono">{e(m.get("reviewed"))}</td></tr>')
 
 
@@ -81,7 +90,7 @@ def build(reports):
         m = read_meta(path)
         (pages.append((path, m)) if m else older.append(path))
     pages.sort(key=lambda pm: (str(pm[1]["reviewed"]), int(pm[1]["pr"])), reverse=True)
-    rows = "\n".join(row(p, m) for p, m in pages) or '<tr><td colspan="12">No pages with council meta yet.</td></tr>'
+    rows = "\n".join(row(p, m) for p, m in pages) or '<tr><td colspan="14">No pages with council meta yet.</td></tr>'
     older_html = ""
     if older:
         items = "\n".join(f'  <li><a href="{html.escape(p.name)}">{html.escape(p.name)}</a></li>' for p in older)
@@ -102,7 +111,7 @@ def build(reports):
 <main>
 <h2>Reviews</h2>
 <table>
-<thead><tr><th>PR</th><th>Title</th><th>Author</th><th>Label</th><th>Tier</th><th>Direction</th><th>Do</th><th>Decide</th><th>Verify</th><th>Nits</th><th>Head</th><th>Reviewed</th></tr></thead>
+<thead><tr><th>PR</th><th>Title</th><th>Author</th><th>Label</th><th>Tier</th><th>Direction</th><th>Scope</th><th>Do</th><th>Decide</th><th>Verify</th><th>Follow-ups</th><th>Nits</th><th>Head</th><th>Reviewed</th></tr></thead>
 <tbody>
 {rows}
 </tbody>
@@ -116,7 +125,7 @@ def build(reports):
 if __name__ == "__main__":
     if len(sys.argv) > 2:
         sys.exit(__doc__)
-    reports = Path(sys.argv[1]) if len(sys.argv) == 2 else Path(__file__).resolve().parent / "reports"
+    reports = Path(sys.argv[1]) if len(sys.argv) == 2 else Path.home() / ".local/state/council/reports"
     if not reports.is_dir():
         sys.exit(f"no reports directory at {reports}")
     out = reports / "index.html"

@@ -1,0 +1,21 @@
+{
+  "theme": "System",
+  "theme_light": "light-orchard",
+  "link_target": "Browser",
+  "layout": "Float",
+  "font_size": 21,
+  "ui_font_size": 16,
+  "font_family": "Inconsolata Nerd Font",
+  "font_family_bold": "Inconsolata Nerd Font",
+  "font_family_italic": "Inconsolata Nerd Font",
+  "font_family_bold_italic": "Inconsolata Nerd Font",
+  "ui_font": "Cabin",
+  "prefs_width": 744,
+  "files": {
+    "wrap_prose": false
+  },
+  "keybinds": {
+    "cmd>alt": "inbox",
+    "cmd>shift": "switch_session"
+  }
+}

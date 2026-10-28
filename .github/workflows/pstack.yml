@@ -1,6 +1,6 @@
 name: pstack
 
-# Rebuilds pstack/plugin from cursor/plugins and commits it straight to main when it changed.
+# Rebuilds plugins/pstack from cursor/plugins and commits it straight to main when it changed.
 on:
   schedule:
     - cron: "17 9 * * *"
@@ -8,14 +8,15 @@ on:
   push:
     branches: [main]
     paths:
-      - pstack/generate.mjs
-      - pstack/omp/**
+      - build/pstack/generate.mjs
+      - build/pstack/omp/**
 
 permissions:
   contents: write
 
+# Shared with zstack.yml: both workflows rewrite .omp-plugin/marketplace.json.
 concurrency:
-  group: pstack
+  group: catalog
   cancel-in-progress: false
 
 jobs:
@@ -33,12 +34,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: node pstack/generate.mjs .upstream
+      - run: node build/pstack/generate.mjs .upstream
       - name: Commit to main
         run: |
-          git add pstack/plugin .omp-plugin/marketplace.json
+          git add plugins/pstack .omp-plugin/marketplace.json
           if git diff --cached --quiet; then
-            echo "pstack/plugin already matches upstream."
+            echo "plugins/pstack already matches upstream."
             exit 0
           fi
           upstream=$(git -C .upstream rev-parse --short HEAD)

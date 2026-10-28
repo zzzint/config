@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- index.py reads this. JSON in single quotes: escape ' in the title as &#39;. head is the full SHA. label is the PR's review: label without the prefix (glance, advisory, cosigner), or "" when it has none. -->
-<meta name="council" content='{"owner":"{{OWNER}}","repo":"{{REPO}}","pr":{{PR}},"title":"{{PR_TITLE}}","author":"{{AUTHOR}}","label":"{{glance|advisory|cosigner|}}","head":"{{HEAD_SHA}}","reviewed":"{{YYYY-MM-DD}}","tier":"{{light|full}}","direction":"{{yes|maybe|no}}","counts":{"do":{{N_DO}},"decide":{{N_DECIDE}},"verify":{{N_VERIFY}},"nits":{{N_NITS}}}}'>
+<!-- index.py reads this. JSON in single quotes: escape ' in the title as &#39;. head is the full SHA. label is the PR's review: label without the prefix (glance, advisory, cosigner), or "" when it has none. scope matches section#scope; lean is the shape seat's removable lines (0 when needed, at least the sum of the cuts). -->
+<meta name="council" content='{"owner":"{{OWNER}}","repo":"{{REPO}}","pr":{{PR}},"title":"{{PR_TITLE}}","author":"{{AUTHOR}}","label":"{{glance|advisory|cosigner|}}","head":"{{HEAD_SHA}}","reviewed":"{{YYYY-MM-DD}}","tier":"{{light|full}}","direction":"{{yes|maybe|no}}","scope":"{{needed|trim|questionable}}","lean":{{N_LEAN}},"counts":{"do":{{N_DO}},"decide":{{N_DECIDE}},"verify":{{N_VERIFY}},"followups":{{N_FOLLOWUPS}},"nits":{{N_NITS}}}}'>
 <title>Council · {{OWNER}}/{{REPO}} #{{PR}}</title>
 <style>
   :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
@@ -17,8 +17,14 @@
   h1 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
   .q,.k,.n,.tag,.assumes,.counts,h2,dt,summary,legend,.pick label,#tray{font-family:ui-monospace,Menlo,monospace}
   .meta{color:var(--muted);font-size:.9rem;margin:0}
-  .essence,.verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
+  .essence,.verdict,.scope{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
   .verdict.yes{border-left-color:var(--ok)} .verdict.maybe{border-left-color:var(--fix)} .verdict.no{border-left-color:var(--block)}
+  .scope{margin-top:1.75rem} .scope.needed{border-left-color:var(--ok)} .scope.trim{border-left-color:var(--fix)} .scope.questionable{border-left-color:var(--block)}
+  .scope p{margin:0}
+  .scope h3{margin:.7rem 0 .2rem;font:600 .75rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .scope h3 .lean{text-transform:none;letter-spacing:0;font-weight:400}
+  .scope ul{margin:0;padding-left:1.1rem} .scope li{margin:.2rem 0}
+  .scope .where,.lines{margin-left:.35rem} .lines{font:.8rem ui-monospace,Menlo,monospace;color:var(--fix)}
   .q{display:block;margin-bottom:.3rem;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .counts{display:flex;flex-wrap:wrap;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem}
   h2{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2.25rem 0 .75rem}
@@ -43,7 +49,7 @@
   .draft{clear:both;margin:.45rem 0 0;padding:.45rem .7rem;background:#fff;border:1px dashed var(--rule);opacity:.5}
   .draft[data-framing]::before{content:attr(data-framing);display:block;font:.65rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .pick:has([value=ask]:checked) [data-framing=ask],.pick:has([value=direct]:checked) [data-framing=direct],
-  .nits li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
+  .nits li:has(:checked) .draft,.followups li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
   .evidence{margin-top:.75rem}
   .lands{clear:both;margin:.45rem 0 0;font-size:.75rem;color:var(--muted)}
   a.lands{font:.8rem ui-monospace,Menlo,monospace;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
@@ -52,9 +58,10 @@
   dd{margin:0}
   code,.where a{font:.85em ui-monospace,Menlo,monospace}
   .where a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
-  ul.nits{list-style:none;padding:0}
-  .nits li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
-  .nits .where{margin-left:.35rem}
+  ul.nits,ul.followups{list-style:none;padding:0}
+  .nits li,.followups li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
+  .followups li{border-left-color:var(--q)}
+  .nits .where,.followups .where{margin-left:.35rem}
   #tray{position:sticky;bottom:0;max-width:76ch;margin:2rem auto 0;padding:.55rem 1.5rem;background:var(--ink);color:var(--bg);
         display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
   #tray[hidden]{display:none}
@@ -72,9 +79,24 @@
   <p class="meta">{{STACK_POSITION}} · head <code>{{HEAD_SHA_SHORT}}</code> · reviewed {{YYYY-MM-DD}}</p>
   <p class="essence"><span class="q">High level context</span>{{≤4 sentences: the problem, what changes, what a user or operator gets. No judgement.}}</p>
   <p class="verdict {{yes|maybe|no}}"><span class="q">Is this the right direction?</span><b>{{Yes.|Maybe.|No.}}</b> {{≤3 sentences of why, as facts about the approach. Maybe says what would settle it.}}</p>
-  <p class="counts"><span><b>{{N_DO}}</b> do before merge</span><span><b>{{N_DECIDE}}</b> decide</span><span><b>{{N_VERIFY}}</b> verify in #{{M}}</span><span><b>{{N_NITS}}</b> nits</span></p>
+  <p class="counts"><span><b>{{N_DO}}</b> do before merge</span><span><b>{{N_DECIDE}}</b> decide</span><span><b>{{N_VERIFY}}</b> verify in #{{M}}</span><span><b>{{N_FOLLOWUPS}}</b> follow-ups</span><span><b>{{N_NITS}}</b> nits</span></p>
 </header>
 <main>
+
+<!-- SCOPE (the shape seat's Scope block). Report-only: not a finding, not counted, never copied. Always present, first in main.
+     Class and <b> agree: needed / Needed., trim / Trim., questionable / Questionable. needed has no cuts; trim has 1 to 5.
+     Links are head-SHA blob links, not comments: no a.lands, no drafts. Omit an h3 and its list when the list is empty. -->
+<section id="scope" class="scope {{needed|trim|questionable}}">
+  <p class="scope-verdict"><span class="q">Is all of this needed?</span><b>{{Needed.|Trim.|Questionable.}}</b> {{≤2 sentences of why.}}</p>
+  <h3>Could cut <span class="lean">about {{N_LEAN}} lines</span></h3>
+  <ul class="cuts">
+    <li data-cite="{{PATH}}:{{LINE}}"><span class="text">{{1 sentence: what goes and why it is safe.}}</span><span class="where"><a href="https://github.com/{{OWNER}}/{{REPO}}/blob/{{HEAD_SHA}}/{{PATH}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></span> <span class="lines">−{{N}}</span></li>
+  </ul>
+  <h3>Not asked for</h3>
+  <ul class="unasked">
+    <li data-cite="{{PATH}}:{{LINE}}"><span class="text">{{1 sentence.}}</span><span class="where"><a href="https://github.com/{{OWNER}}/{{REPO}}/blob/{{HEAD_SHA}}/{{PATH}}#L{{LINE}}">{{FILE}}:{{LINE}}</a></span></li>
+  </ul>
+</section>
 
 <!-- PRIMER (TUTOR.md). Collapsed. ≤3 concepts, standalone: no links to other review pages. Omit the whole details when no concept qualifies. -->
 <details id="primer">
@@ -127,6 +149,13 @@
 <h2 class="decide">Decide</h2>
 <h2 class="verify">Verify in #{{M}}</h2>
 
+<!-- FOLLOW-UPS: real, but not for this PR (skeptic step 6). Same as a nit, with no "nit:" prefix and a ticket-suggestion draft. Unchecked by default. Omit the h2 and list when there are none. -->
+<h2 id="followups">Follow-ups</h2>
+<ul class="followups">
+  <li id="u1" data-cite="{{PATH}}:{{LINE}}"><input type="checkbox" aria-label="pick follow-up 1"> <span class="tag">{{LENS}}</span> <span class="text">{{1 sentence.}}</span><span class="where"><a class="lands" href="https://github.com/{{OWNER}}/{{REPO}}/pull/{{PR}}/files#diff-{{SHA256_OF_PATH}}R{{LINE}}">{{FILE}}:{{LINE}}</a></span>
+    <div class="draft" contenteditable="true">{{≤2 sentences: a ticket suggestion, not a gate ("Perhaps worth a follow-up ticket for …").}}</div></li>
+</ul>
+
 <!-- NITS: no user- or operator-visible consequence. Unchecked by default. -->
 <h2 id="nits">Nits</h2>
 <ul class="nits">
@@ -142,7 +171,7 @@
 (() => {
   const meta = JSON.parse(document.querySelector('meta[name="council"]').content);
   const key = `council:${meta.owner}/${meta.repo}#${meta.pr}@${meta.head}`;
-  const items = [...document.querySelectorAll('article.card, ul.nits li')];
+  const items = [...document.querySelectorAll('article.card, ul.nits li, ul.followups li')];
   const tray = document.getElementById('tray'), out = document.getElementById('md'), button = document.getElementById('copy');
   const box = el => el.querySelector('input[type="checkbox"]');
   const pick = el => box(el) ? (box(el).checked ? 'nit' : 'skip') : el.querySelector('.pick input:checked')?.value || 'skip';
@@ -168,7 +197,7 @@
   document.addEventListener('input', e => {
     const d = e.target.closest?.('.draft');
     if (!d) return;
-    const el = d.closest('article.card, ul.nits li');
+    const el = d.closest('article.card, ul.nits li, ul.followups li');
     if (box(el)) box(el).checked = true;
     else el.querySelector(`.pick input[value="${d.dataset.framing}"]`).checked = true;
     save();

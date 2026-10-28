@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-// Builds pstack/plugin, the omp copy of pstack, from a checkout of cursor/plugins.
+// Builds plugins/pstack, the omp copy of pstack, from a checkout of cursor/plugins.
 //
-//   node pstack/generate.mjs <cursor-plugins checkout>          write the tree when it changed
-//   node pstack/generate.mjs <cursor-plugins checkout> --check  fail when the tree is out of date
+//   node build/pstack/generate.mjs <cursor-plugins checkout>          write the tree when it changed
+//   node build/pstack/generate.mjs <cursor-plugins checkout> --check  fail when the tree is out of date
 
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = join(HERE, "plugin");
+const ROOT = join(HERE, "..", "..");
+const OUT = join(ROOT, "plugins", "pstack");
 const OMP = join(HERE, "omp");
-const CATALOG = join(HERE, "..", ".omp-plugin", "marketplace.json");
+const CATALOG = join(ROOT, ".omp-plugin", "marketplace.json");
 const PLUGIN = "pstack";
 const ADAPTER_SKILL = "pstack-omp";
 const GUIDE = "docs/guide";
@@ -23,7 +24,7 @@ const ADAPTER_LINE =
   "It maps the Cursor names in pstack skills to omp.";
 
 const [upstreamArg] = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
-if (!upstreamArg) fail("usage: node pstack/generate.mjs <cursor-plugins checkout> [--check]");
+if (!upstreamArg) fail("usage: node build/pstack/generate.mjs <cursor-plugins checkout> [--check]");
 const UPSTREAM = resolvePath(upstreamArg);
 const PSTACK = join(UPSTREAM, "pstack");
 const SKILLS = join(PSTACK, "skills");
@@ -149,7 +150,7 @@ for (const [path, entry] of files) {
   if (!path.endsWith(".md")) continue;
   for (const [, href] of entry.bytes.toString("utf8").matchAll(LINK)) {
     const target = resolveLink(path, href);
-    if (target && !has(files, target)) dangling.push(`pstack/plugin/${path} links to ${href}, which is not in the tree`);
+    if (target && !has(files, target)) dangling.push(`plugins/pstack/${path} links to ${href}, which is not in the tree`);
   }
 }
 for (const link of dangling) console.log(`FAIL ${link}`);
@@ -167,7 +168,7 @@ const { $schema: _agentPluginsSchema, ...upstreamManifest } = JSON.parse(readFil
 const upstreamVersion = upstreamManifest.version;
 const catalog = JSON.parse(readFileSync(CATALOG, "utf8"));
 const entry = catalog.plugins.find((plugin) => plugin.name === PLUGIN);
-if (!entry) fail(`${relative(join(HERE, ".."), CATALOG)} has no ${PLUGIN} entry`);
+if (!entry) fail(`${relative(ROOT, CATALOG)} has no ${PLUGIN} entry`);
 
 function stampManifest(version) {
   files.set(MANIFEST, { bytes: Buffer.from(`${JSON.stringify({ ...upstreamManifest, version }, null, 2)}\n`), executable: false });
@@ -182,12 +183,12 @@ const drifted = [...new Set([...files.keys(), ...onDisk.keys()])].sort().filter(
 if (!entry.version.startsWith(`${upstreamVersion}-omp.`) && !drifted.includes(MANIFEST)) drifted.push(MANIFEST);
 
 if (drifted.length === 0) {
-  console.log("pstack/plugin is up to date.");
+  console.log("plugins/pstack is up to date.");
   process.exit(0);
 }
 if (process.argv.includes("--check")) {
-  for (const path of drifted.slice(0, 20)) console.log(`pstack/plugin/${path}`);
-  fail("pstack/plugin is out of date. Run `node pstack/generate.mjs <cursor-plugins checkout>` and commit the result.");
+  for (const path of drifted.slice(0, 20)) console.log(`plugins/pstack/${path}`);
+  fail("plugins/pstack is out of date. Run `node build/pstack/generate.mjs <cursor-plugins checkout>` and commit the result.");
 }
 
 entry.version = `${upstreamVersion}-omp.${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;

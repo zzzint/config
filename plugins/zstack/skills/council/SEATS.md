@@ -54,10 +54,23 @@ One structural problem is the review: lead with it, and drop the smaller items i
 
 **`shape`** — the size and simplicity of what was built. Read the PR body for its motivation, not to check its claims.
 - *Overcomplication* — an abstraction with one caller; a knob nothing sets; a layer that forwards unchanged; a generic where two concrete lines would do; a bespoke helper beside a library or existing one; a "for later" seam or alias with no consumer; prose longer than the behavior.
-- *Scope* — over ~1000 changed lines, or refactor mixed with feature → suggest a split along a named seam. Work the motivation does not ask for, or asks for and is missing.
+- *Scope* — over ~1000 changed lines, or refactor mixed with feature → suggest a split along a named seam. Work the motivation asks for and is missing is a finding. Work it does not ask for goes in the Scope block.
 - *Drift* — doc↔code and spec↔code, line by line, including docs earlier in the stack. Runbooks runnable as written; new env vars documented.
 
 Name the move: replace conditionals with a typed model, collapse duplicate branches, separate orchestration from logic, reuse the canonical helper, delete a pass-through wrapper. Moving logic to the package that owns it is `design`'s Fit. Give the cost now versus after it has consumers. Not findings: a helper that names a concept, merging unrelated logic to look simpler, complexity the spec demands.
+
+**Scope block.** `shape` ends its report with this block, after the checklist. It is report-only: never a finding, never a card.
+
+```
+# Scope
+verdict: needed | trim | questionable
+why: ≤2 sentences
+cuts: ≤5, each: what (1 sentence) · cite file:line · lines ≈N
+unasked: each: what (1 sentence) · cite file:line
+lean: total removable lines (≥ the sum of cut lines; 0 when needed)
+```
+
+Judge need before elegance. Name only concrete scope that is safe to remove: dead code, unused options, speculative flexibility, duplicate helpers, needless dependencies, behavior nobody asked for. Prefer the smallest complete change and the repo's existing patterns. Never cut validation at a trust boundary, data-loss protection, security, accessibility, required error handling, or requested behavior. **`needed`**: the scope is justified, no cuts. **`trim`**: at least one specific, safe cut. **`questionable`**: the need itself lacks support. A cut listed here is not also filed as a finding or a nit.
 
 **`correctness`** — code that passes tests and fails in use.
 - *Bugs* — stale in-memory state written over a fresher row; check-then-act without atomicity; cancel or timeout windows before the final write; recovery or dedupe on the wrong key (name vs id); null paths; off-by-one on caps and pagination; swallowed errors returning partial data as success; one rule implemented twice.

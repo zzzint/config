@@ -1,11 +1,9 @@
 # council — a PR review skill
 
-Drop this folder at `~/.agents/skills/council/` on the target machine (and symlink
-`~/.claude/skills/council -> ../../.agents/skills/council` if Claude Code should see it).
-Needs `gh` (authenticated) and `python3`.
+Ships in the `zstack` plugin (`omp plugin install zstack@zzzint`). Needs `gh` (authenticated) and `python3`.
 
-- `/council <owner>/<repo>#<N>` reviews one PR; a list of PRs is reviewed as a stack, base to head.
-- `/council` with no PR reviews every open PR where you are a requested reviewer.
+- `/skill:council <owner>/<repo>#<N>` reviews one PR; a list of PRs is reviewed as a stack, base to head.
+- `/skill:council` with no PR reviews every open PR where you are a requested reviewer.
 
 Each PR gets one local HTML page with graded cards. Every card carries two comment drafts, one that
 asks and one that says it directly, linked to the diff line it would land on. Pick, edit and copy
@@ -20,8 +18,9 @@ index page.
 | `REPORT.html` | The page template |
 | `floor.py` | Mechanical language and anchor checks for a page |
 | `lands.py` | Writes each comment's diff link from the line it lands on |
-| `index.py` | Builds `reports/index.html` from every page |
+| `index.py` | Builds `~/.local/state/council/reports/index.html` from every page |
 | `EXAMPLE.html`, `EXAMPLE.diff` | A made-up review to match; `python3 floor.py EXAMPLE.html --diff EXAMPLE.diff` passes |
 
-The skill creates `ledgers/` and `reports/` beside these files as it runs. They are the reviewing
-machine's own history, can quote private repositories, and are not part of the package.
+The skill writes `ledgers/` and `reports/` under `~/.local/state/council/`, never beside these files,
+because a plugin upgrade replaces this folder. They are the reviewing machine's own history, can
+quote private repositories, and are not part of the package.

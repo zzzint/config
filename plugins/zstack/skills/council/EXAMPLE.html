@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="council" content='{"owner":"acme","repo":"shop-api","pr":142,"title":"rate-limit the public API per account with a token bucket","author":"sam-dev","label":"cosigner","head":"5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7","reviewed":"2026-10-01","tier":"full","direction":"yes","counts":{"do":2,"decide":2,"verify":0,"nits":3}}'>
+<meta name="council" content='{"owner":"acme","repo":"shop-api","pr":142,"title":"rate-limit the public API per account with a token bucket","author":"sam-dev","label":"cosigner","head":"5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7","reviewed":"2026-10-01","tier":"full","direction":"yes","scope":"trim","lean":3,"counts":{"do":2,"decide":2,"verify":0,"followups":1,"nits":3}}'>
 <title>Council · acme/shop-api #142</title>
 <style>
   :root{--bg:#f6f4ef;--ink:#1d1b17;--muted:#6b665c;--rule:#d9d4c8;--card:#fffdf8;
@@ -16,8 +16,14 @@
   h1 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
   .q,.k,.n,.tag,.assumes,.counts,h2,dt,summary,legend,.pick label,#tray{font-family:ui-monospace,Menlo,monospace}
   .meta{color:var(--muted);font-size:.9rem;margin:0}
-  .essence,.verdict{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
+  .essence,.verdict,.scope{margin:1rem 0 0;padding:.75rem 1rem;background:var(--card);border-left:4px solid var(--rule)}
   .verdict.yes{border-left-color:var(--ok)} .verdict.maybe{border-left-color:var(--fix)} .verdict.no{border-left-color:var(--block)}
+  .scope{margin-top:1.75rem} .scope.needed{border-left-color:var(--ok)} .scope.trim{border-left-color:var(--fix)} .scope.questionable{border-left-color:var(--block)}
+  .scope p{margin:0}
+  .scope h3{margin:.7rem 0 .2rem;font:600 .75rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .scope h3 .lean{text-transform:none;letter-spacing:0;font-weight:400}
+  .scope ul{margin:0;padding-left:1.1rem} .scope li{margin:.2rem 0}
+  .scope .where,.lines{margin-left:.35rem} .lines{font:.8rem ui-monospace,Menlo,monospace;color:var(--fix)}
   .q{display:block;margin-bottom:.3rem;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .counts{display:flex;flex-wrap:wrap;gap:1.25rem;margin:.9rem 0 0;font-size:.85rem}
   h2{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2.25rem 0 .75rem}
@@ -42,7 +48,7 @@
   .draft{clear:both;margin:.45rem 0 0;padding:.45rem .7rem;background:#fff;border:1px dashed var(--rule);opacity:.5}
   .draft[data-framing]::before{content:attr(data-framing);display:block;font:.65rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .pick:has([value=ask]:checked) [data-framing=ask],.pick:has([value=direct]:checked) [data-framing=direct],
-  .nits li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
+  .nits li:has(:checked) .draft,.followups li:has(:checked) .draft,.draft:focus{opacity:1;border:1px solid var(--q);outline:0}
   .evidence{margin-top:.75rem}
   .lands{clear:both;margin:.45rem 0 0;font-size:.75rem;color:var(--muted)}
   a.lands{font:.8rem ui-monospace,Menlo,monospace;color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
@@ -51,9 +57,10 @@
   dd{margin:0}
   code,.where a{font:.85em ui-monospace,Menlo,monospace}
   .where a{color:var(--q);text-decoration:none;border-bottom:1px dotted var(--q)}
-  ul.nits{list-style:none;padding:0}
-  .nits li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
-  .nits .where{margin-left:.35rem}
+  ul.nits,ul.followups{list-style:none;padding:0}
+  .nits li,.followups li{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.6rem .9rem;margin:0 0 .6rem}
+  .followups li{border-left-color:var(--q)}
+  .nits .where,.followups .where{margin-left:.35rem}
   #tray{position:sticky;bottom:0;max-width:76ch;margin:2rem auto 0;padding:.55rem 1.5rem;background:var(--ink);color:var(--bg);
         display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
   #tray[hidden]{display:none}
@@ -70,9 +77,17 @@
   <p class="meta">Single PR on <code>main</code> · head <code>5d1e0c9b</code> · reviewed 2026-10-01</p>
   <p class="essence"><span class="q">High level context</span>The public API has no limit on how often a caller may send requests, so one misbehaving integration can slow the service for every account. This PR puts a token-bucket limiter in front of every public route. Each account may burst 20 requests and then refills at 5 per second. Bucket state lives in Redis, so every API instance shares one count per account.</p>
   <p class="verdict yes"><span class="q">Is this the right direction?</span><b>Yes.</b> A shared per-account limit is the standard answer to one noisy caller slowing everyone, and a token bucket allows the short bursts real integrations produce. The open question is what happens when Redis is down, which is <a href="#f3">card #3</a>.</p>
-  <p class="counts"><span><b>2</b> do before merge</span><span><b>2</b> decide</span><span><b>3</b> nits</span></p>
+  <p class="counts"><span><b>2</b> do before merge</span><span><b>2</b> decide</span><span><b>1</b> follow-up</span><span><b>3</b> nits</span></p>
 </header>
 <main>
+
+<section id="scope" class="scope trim">
+  <p class="scope-verdict"><span class="q">Is all of this needed?</span><b>Trim.</b> The limiter itself is needed, since one noisy caller can slow every account. A small wrapper around its settings adds nothing.</p>
+  <h3>Could cut <span class="lean">about 3 lines</span></h3>
+  <ul class="cuts">
+    <li data-cite="src/middleware/rateLimit.ts:14"><span class="text"><code>createLimiter</code> returns its two arguments unchanged, so an object literal would do the same job.</span><span class="where"><a href="https://github.com/acme/shop-api/blob/5d1e0c9b7a3f2e18c4d6b0a9e7f1c2d3b4a5e6f7/src/middleware/rateLimit.ts#L14">rateLimit.ts:14</a></span> <span class="lines">−3</span></li>
+  </ul>
+</section>
 
 <details id="primer">
   <summary>Primer — 2 concepts this page assumes</summary>
@@ -193,6 +208,12 @@
   </details>
 </article>
 
+<h2 id="followups">Follow-ups</h2>
+<ul class="followups">
+  <li id="u1" data-cite="src/middleware/rateLimit.ts:38"><input type="checkbox" aria-label="pick follow-up 1"> <span class="tag">safety</span> <span class="text">The shared Redis client has no command timeout, so a slow Redis stalls every limited request.</span><span class="where"><a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-b3f285f74315ca0a0594a1319122cf3b0a5b15dcab60014c1f8bd6896818a8dbR38">src/middleware/rateLimit.ts:38</a></span>
+    <div class="draft" contenteditable="true">Perhaps worth a follow-up ticket for a command timeout on the shared Redis client? A slow Redis would hold every limited request, and the fix sits outside this change.</div></li>
+</ul>
+
 <h2 id="nits">Nits</h2>
 <ul class="nits">
   <li id="n1" data-cite="src/app.ts:24"><input type="checkbox" aria-label="pick nit 1"> <span class="tag">shape</span> <span class="text">The rate-limit doc still says limits are not enforced yet.</span><span class="where"><a class="lands" href="https://github.com/acme/shop-api/pull/142/files#diff-841254fe75488c1bd4cd7f68f00b4be0e48dcfbc4a16b45847b68295e0e3b27bR24">src/app.ts:24</a></span>
@@ -210,7 +231,7 @@
 (() => {
   const meta = JSON.parse(document.querySelector('meta[name="council"]').content);
   const key = `council:${meta.owner}/${meta.repo}#${meta.pr}@${meta.head}`;
-  const items = [...document.querySelectorAll('article.card, ul.nits li')];
+  const items = [...document.querySelectorAll('article.card, ul.nits li, ul.followups li')];
   const tray = document.getElementById('tray'), out = document.getElementById('md'), button = document.getElementById('copy');
   const box = el => el.querySelector('input[type="checkbox"]');
   const pick = el => box(el) ? (box(el).checked ? 'nit' : 'skip') : el.querySelector('.pick input:checked')?.value || 'skip';
@@ -236,7 +257,7 @@
   document.addEventListener('input', e => {
     const d = e.target.closest?.('.draft');
     if (!d) return;
-    const el = d.closest('article.card, ul.nits li');
+    const el = d.closest('article.card, ul.nits li, ul.followups li');
     if (box(el)) box(el).checked = true;
     else el.querySelector(`.pick input[value="${d.dataset.framing}"]`).checked = true;
     save();

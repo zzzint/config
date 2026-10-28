@@ -1,0 +1,108 @@
+setupVersion: 2
+modelRoles:
+  smol: openai-codex/gpt-5.6-luna:high
+  slow: anthropic/claude-fable-5-1:high
+  vision: anthropic/claude-opus-5-5:high
+  plan: anthropic/claude-fable-5-1:high
+  designer: anthropic/claude-opus-5-5:high
+  commit: anthropic/claude-sonnet-5:high
+  tiny: openai-codex/gpt-5.6-luna:high
+  task: anthropic/claude-opus-5-5:high
+  advisor: anthropic/claude-fable-5-1:high
+  SECURITY: anthropic/claude-fable-5-1:high
+  web: anthropic/claude-haiku-4-5
+  default: anthropic/claude-opus-5-5:high
+symbolPreset: ascii
+composer:
+  shape: band
+  tokenRate: true
+theme:
+  dark: dark-solstice
+  light: marble
+spelling:
+  autocomplete: "off"
+task:
+  enableLsp: false
+  isolation:
+    enabled: true
+  eager: always
+  batch: true
+  agentModelOverrides:
+    poteto-agent: openai-codex/gpt-6.1-sol:xhigh
+    poteto-judge: anthropic/claude-opus-5-5:xhigh
+steeringMode: one-at-a-time
+interruptMode: immediate
+advisor:
+  enabled: true
+statusLine:
+  preset: compact
+  separator: slash
+  contextLine: "off"
+  sessionAccent: false
+  transparent: true
+  compactThinkingLevel: false
+  showHookStatus: true
+defaultThinkingLevel: high
+dev:
+  autoqaConsent: granted
+display:
+  hideToolActivity: true
+  smoothStreaming: false
+  pinnedAgents: full
+power:
+  sleepPrevention: system
+tui:
+  tight: false
+  textSizing: false
+colorBlindMode: false
+omitThinking: true
+speechgen:
+  enabled: true
+personality: pragmatic
+hideThinkingBlock: true
+isolation:
+  backend: auto
+retry:
+  fallbackChains:
+    web:
+      - web/perplexity
+      - google/gemini-2.5-flash
+      - openai-codex/gpt-5.6-luna
+      - xai/grok-4.5
+      - web/zai
+      - web/exa
+      - web/tinyfish
+      - web/jina
+      - web/kagi
+      - web/tavily
+      - web/firecrawl
+      - web/brave
+      - web/kimi
+      - web/parallel
+      - web/synthetic
+      - web/searxng
+      - web/startpage
+      - web/duckduckgo
+      - web/ecosia
+      - web/google
+      - web/mojeek
+      - web/public
+      - google-antigravity/gemini-2.5-flash
+      - openai-codex/gpt-5.6
+      - openai-codex/gpt-5.5
+      - xai-oauth/grok-4.5
+      - web/ollama
+autolearn:
+  enabled: false
+live:
+  voice: sol
+tts:
+  localVoice: af_heart
+lsp:
+  enabled: true
+plan:
+  enabled: false
+browser:
+  headless: false
+marketplace:
+  autoUpdate: auto

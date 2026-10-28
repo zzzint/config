@@ -2,8 +2,8 @@
   {
     "context": "Editor && !edit_prediction",
     "bindings": {
-      "cmd-g": "editor::ShowEditPrediction"
-    }
+      "cmd-g": "editor::ShowEditPrediction",
+    },
   },
   {
     "context": "Editor && VimControl && !VimWaiting && !menu",
@@ -13,13 +13,13 @@
       "g a": "editor::SelectAllMatches",
       "g r": "editor::FindAllReferences",
       "g d": "editor::GoToDefinition",
-      "g D": "git::Diff",
+      "g D": "git::DiffBranch",
       "g c": "command_palette::Toggle",
       "g f": "file_finder::Toggle",
       "g e": "diagnostics::Deploy",
       "g s": "outline::Toggle",
-      "g shift-s": "project_symbols::Toggle"
-    }
+      "g shift-s": "project_symbols::Toggle",
+    },
   },
   {
     "context": "Editor && vim_mode == normal && !VimWaiting && !menu",
@@ -38,8 +38,8 @@
       "[ e": "editor::GoToPreviousDiagnostic",
 
       "] h": "editor::GoToHunk",
-      "[ h": "editor::GoToPreviousHunk"
-    }
+      "[ h": "editor::GoToPreviousHunk",
+    },
   },
   {
     "context": "Pane",
@@ -54,13 +54,13 @@
       "ctrl-7": ["pane::ActivateItem", 6],
       "ctrl-8": ["pane::ActivateItem", 7],
       "ctrl-9": ["pane::ActivateItem", 8],
-      "cmd-shift-f": "pane::DeploySearch"
-    }
+      "cmd-shift-f": "pane::DeploySearch",
+    },
   },
   {
     "context": "Editor && vim_mode == insert",
     "bindings": {
-      "cmd-s": ["workspace::SendKeystrokes", "escape : w enter"]
-    }
-  }
+      "cmd-s": ["workspace::SendKeystrokes", "escape : w enter"],
+    },
+  },
 ]

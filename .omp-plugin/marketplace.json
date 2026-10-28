@@ -6,11 +6,17 @@
   "plugins": [
     {
       "name": "pstack",
-      "source": "./pstack/plugin",
-      "description": "pstack by poteto, generated for omp from cursor/plugins by pstack/generate.mjs.",
+      "source": "./plugins/pstack",
+      "description": "pstack by poteto, generated for omp from cursor/plugins by build/pstack/generate.mjs.",
       "version": "0.15.36-omp.20261028155908",
       "license": "MIT",
       "homepage": "https://github.com/cursor/plugins/tree/main/pstack"
+    },
+    {
+      "name": "zstack",
+      "source": "./plugins/zstack",
+      "description": "Justin Zint's own omp skills and rules: charcuterie, contextualize, council, recap, and the global safety rule.",
+      "version": "0.1.0-20261028213021"
     }
   ]
 }
