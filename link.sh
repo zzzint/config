@@ -32,7 +32,7 @@ for ((i = 0; i < ${#links[@]}; i += 2)); do
   fi
 
   if $check; then
-    if [[ -e "$target" ]]; then echo "drifted $target is not a link to $source"; else echo "missing $target"; fi
+    if [[ -e "$target" || -L "$target" ]]; then echo "drifted $target is not a link to $source"; else echo "missing $target"; fi
     drift=1
     continue
   fi
@@ -60,7 +60,7 @@ fi
 
 installed="$(omp plugin list --json)"
 for plugin in pstack zstack; do
-  if grep -q "\"id\": \"$plugin@zzzint\"" <<<"$installed"; then
+  if grep -Eq "\"id\": *\"$plugin@zzzint\"" <<<"$installed"; then
     echo "ok      $plugin@zzzint"
   else
     omp plugin install "$plugin@zzzint"

@@ -27,7 +27,7 @@ The Dynatrace MCP server reads its token from the macOS keychain through `securi
 
 ## Changing zstack
 
-Edit under `plugins/zstack/`, commit and push. The workflow stamps a new version on `main`; pick it up with:
+Edit under `plugins/zstack/`, commit and push. The workflow stamps a new version on `main`, keeping the base version from `plugins/zstack/.claude-plugin/plugin.json` (change the part before `-` there to start a new base); pick it up with:
 
 ```sh
 omp plugin marketplace update zzzint

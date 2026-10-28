@@ -19,7 +19,10 @@ jobs:
   version:
     runs-on: ubuntu-latest
     steps:
+      # The tip of main, not the triggering commit: a run queued behind the other catalog workflow must build on its push.
       - uses: actions/checkout@v7
+        with:
+          ref: main
       - uses: actions/setup-node@v7
         with:
           node-version: 24

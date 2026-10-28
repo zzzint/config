@@ -22,9 +22,10 @@ if (!entry) {
   process.exit(1);
 }
 
-const base = entry.version.split("-")[0];
-const version = `${base}-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;
+// The manifest sits under the path that triggers the workflow, so a new base version is set there.
 const manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
+const base = manifest.version.split("-")[0];
+const version = `${base}-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;
 
 entry.version = version;
 writeFileSync(CATALOG, `${JSON.stringify(catalog, null, 2)}\n`);
