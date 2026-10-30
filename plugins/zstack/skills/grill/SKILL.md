@@ -1,5 +1,5 @@
 ---
-name: grilling
+name: grill
 description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases. Also invoke it on your own judgment when a plan or decision is worth grilling — several viable designs, unstated requirements, or a choice that is costly to reverse — rather than guessing at the open branches.
 ---
 
