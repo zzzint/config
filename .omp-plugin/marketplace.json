@@ -15,7 +15,7 @@
     {
       "name": "zstack",
       "source": "./plugins/zstack",
-      "description": "Justin Zint's own omp skills and rules: charcuterie, contextualize, council, grill (from mattpocock/skills), recap, and the global-safety and browser rules.",
+      "description": "Justin Zint's own omp skills and rules: charcuterie, contextualize, council, grill (from mattpocock/skills), recap, spec, and the global-safety and browser rules.",
       "version": "0.1.0-20261030230730"
     }
   ]
