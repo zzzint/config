@@ -119,7 +119,7 @@ raw input
   -> serialized output
 ```
 
-Include current vs proposed flow when changing existing behavior. Include failure, retry, cancellation, transactionality, idempotency, observability, authorization, and runtime-hop flow when reachable.
+Include current vs proposed flow when changing existing behavior. Include failure, retry, cancellation, transactionality, idempotency, observability, and authorization flow when reachable. Mark runtime hops in the 5b graph, not here, unless 5b is omitted.
 
 Completion criterion: every affected behavior has an end-to-end call stack and type/data-flow trace.
 
@@ -145,7 +145,7 @@ GET /api/reviews/:id/progress                  // entrypoint
 - Mark concurrency, and what is pure.
 - When the change alters wiring, draw the current graph and the proposed graph, and say what moved.
 
-Required whenever the change adds, removes, or moves a service, a Layer, an adapter, or a runtime hop. Omit it only when it would be a single line.
+Required whenever the change adds, removes, or moves a service, a Layer, an adapter, or a runtime hop. Otherwise omit it when it would be a single line, or when the change touches one behavior on one entrypoint: the section 5 stack already shows that path.
 
 Completion criterion: every service, Layer, adapter, and runtime hop in the changed paths appears exactly once in the graph, with its lifetime and hop marked, and matches the per-behavior call stacks.
 
