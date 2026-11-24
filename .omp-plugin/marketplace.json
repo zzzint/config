@@ -8,7 +8,7 @@
       "name": "pstack",
       "source": "./plugins/pstack",
       "description": "pstack by poteto, generated for omp from cursor/plugins by build/pstack/generate.mjs.",
-      "version": "0.15.46-omp.20261120174511",
+      "version": "0.15.48-omp.20261124200743",
       "license": "MIT",
       "homepage": "https://github.com/cursor/plugins/tree/main/pstack"
     },
