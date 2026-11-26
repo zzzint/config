@@ -29,7 +29,7 @@ task:
   batch: true
   agentModelOverrides:
     poteto-agent: anthropic/claude-opus-5-5:high
-    poteto-judge: anthropic/claude-opus-5-5:xhigh
+    poteto-judge: anthropic/claude-opus-5-5:high
 steeringMode: one-at-a-time
 interruptMode: immediate
 advisor:

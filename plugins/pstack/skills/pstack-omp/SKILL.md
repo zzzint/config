@@ -45,16 +45,16 @@ The `task` tool has no `model` field. omp takes a worker's model from the `task.
 | A `grok-*`, `gpt-*`, or other non-Claude slug | `agent: "poteto-agent"`. |
 | `inherit-parent` or `auto` | Omit `agent` when the step allows a `generalPurpose` worker. omp cannot pin a named agent to the parent's model, so a step that needs `poteto-agent` uses it as is. |
 | A panel list, such as arena runners, architect runners, or interrogate reviewers | One worker per entry, each mapped by the rows above. When `poteto-agent` and `poteto-judge` run on the same model, the panel has one model, not several. Say so in the report. |
-| The effort token in a slug | Set by the thinking suffix of the agent's override, such as `:xhigh`, not per call. Drop it from the call. |
-| The `pstack-models.mdc` rule, `~/.cursor/rules/pstack-models.mdc` | `task.agentModelOverrides` in `~/.omp/agent/config.yml`, with one entry each for `poteto-agent` and `poteto-judge`. Each value is `<provider>/<model>:<thinking>`, such as `anthropic/claude-opus-5-5:xhigh`. |
+| The effort token in a slug | Set by the thinking suffix of the agent's override, such as `:high`, not per call. Drop it from the call. |
+| The `pstack-models.mdc` rule, `~/.cursor/rules/pstack-models.mdc` | `task.agentModelOverrides` in `~/.omp/agent/config.yml`, with one entry each for `poteto-agent` and `poteto-judge`. Each value is `<provider>/<model>:<thinking>`, such as `anthropic/claude-opus-5-5:high`. |
 
 ## setup-pstack
 
 Follow `setup-pstack` with these changes:
 
 - Detect. `omp models` lists the models this install can use. Write a model as `<provider>/<model>:<thinking>`.
-- Map. omp has two pstack seats. `poteto-agent` takes every role whose default is a Grok slug: feature, refactoring, bug-fix, perf-issue, hillclimb, how explorer, why investigators, reflect tooling, and swarm workers. `poteto-judge` takes every role whose default is a Claude slug: judgment and prose, hardest tasks, how explainer, why synthesizer, and reflect judgment. A panel runs one worker on each seat. `poteto-agent` runs on `anthropic/claude-opus-5-5` at `high` and `poteto-judge` on `anthropic/claude-opus-5-5` at `xhigh`, so a panel is one model family at two efforts; say so in the report. Offer only non-Grok models for either seat.
-- Budget. The budget sets the thinking suffix of both seats: `max`, `xhigh`, `high`, or `medium`.
+- Map. omp has two pstack seats. `poteto-agent` takes every role whose default is a Grok slug: feature, refactoring, bug-fix, perf-issue, hillclimb, how explorer, why investigators, reflect tooling, and swarm workers. `poteto-judge` takes every role whose default is a Claude slug: judgment and prose, hardest tasks, how explainer, why synthesizer, and reflect judgment. A panel runs one worker on each seat. Both seats run on `anthropic/claude-opus-5-5` at `high`, so a panel is one model; say so in the report. Offer only non-Grok models for either seat.
+- Budget. The budget sets the thinking suffix of both seats: `high` or `medium`. Never `xhigh` or `max`.
 - Write. Show the two entries and ask before you change settings. Then set them under `task.agentModelOverrides` in `~/.omp/agent/config.yml`, or have the user pick them for each agent in the `/agents` hub. Write no `pstack-models.mdc`.
 
 ## Paths
