@@ -28,7 +28,7 @@ task:
   eager: always
   batch: true
   agentModelOverrides:
-    poteto-agent: openai-codex/gpt-6.1-sol:xhigh
+    poteto-agent: anthropic/claude-opus-5-5:high
     poteto-judge: anthropic/claude-opus-5-5:xhigh
 steeringMode: one-at-a-time
 interruptMode: immediate
